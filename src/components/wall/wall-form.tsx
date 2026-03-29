@@ -1,0 +1,279 @@
+'use client'
+
+import { useCallback } from 'react'
+import type { WallFormFields, WallType } from '@/types/wall'
+import { getDefaultFormFields } from '@/types/wall'
+import SectionDiagram from './section-diagram'
+
+interface WallFormProps {
+  fields: WallFormFields
+  onChange: (fields: WallFormFields) => void
+}
+
+const WALL_TYPES: WallType[] = ['L형', '역L형', '역T형', '중력식']
+const REBAR_DIAS = [10, 13, 16, 19, 22, 25, 29, 32]
+
+export default function WallForm({ fields, onChange }: WallFormProps) {
+  const f = fields
+  const isGravity = f.wall_type === '중력식'
+  const isRevL = f.wall_type === '역L형'
+
+  const set = useCallback(
+    (patch: Partial<WallFormFields>) => {
+      onChange({ ...f, ...patch })
+    },
+    [f, onChange],
+  )
+
+  const handleWallType = (wt: WallType) => {
+    const next = getDefaultFormFields(wt)
+    onChange(next)
+  }
+
+  // computed display values
+  const t_stem = f.stem_top
+  const H = f.H_stem + f.D_slab
+  const B = f.C6_toe + t_stem + f.batter + f.batter_back + f.C8_heel
+  const Hs_soil = f.H_stem - f.Hs_gap
+
+  return (
+    <div className="space-y-1 text-sm">
+      {/* 옹벽 형식 */}
+      <Section title="옹벽 형식" defaultOpen>
+        <div className="flex flex-wrap gap-2">
+          {WALL_TYPES.map((wt) => (
+            <label key={wt} className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="radio"
+                name="wall_type"
+                checked={f.wall_type === wt}
+                onChange={() => handleWallType(wt)}
+                className="accent-blue-600"
+              />
+              <span className={f.wall_type === wt ? 'font-bold text-blue-700' : ''}>{wt}</span>
+            </label>
+          ))}
+        </div>
+        {isGravity && (
+          <label className="flex items-center gap-2 mt-2">
+            <input
+              type="checkbox"
+              checked={f.semi_gravity}
+              onChange={(e) => set({ semi_gravity: e.target.checked })}
+              className="accent-blue-600"
+            />
+            <span>반중력식 (철근 배근)</span>
+          </label>
+        )}
+      </Section>
+
+      {/* 단면 치수 */}
+      <Section title="단면 치수" defaultOpen>
+        {/* 표준 단면도 */}
+        <SectionDiagram
+          wallType={f.wall_type}
+          stemTop={f.stem_top}
+          hStem={f.H_stem}
+          batter={f.batter}
+          batterBack={f.batter_back}
+          c6Toe={f.C6_toe}
+          c8Heel={f.C8_heel}
+          dSlab={f.D_slab}
+          hsGap={f.Hs_gap}
+        />
+
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
+          <Num label="t₁ 벽체 상단폭 (m)" value={f.stem_top} step={0.01}
+            onChange={(v) => set({ stem_top: v })} />
+          <Num label="Hₛ 벽체 높이 (m)" value={f.H_stem} step={0.1}
+            onChange={(v) => set({ H_stem: v })} />
+          <Num label="C₁ 전면 경사 (m)" value={f.batter} step={0.01}
+            onChange={(v) => set({ batter: v })} />
+          <Num label="C₃ 배면 경사 (m)" value={f.batter_back} step={0.01}
+            onChange={(v) => set({ batter_back: v })} />
+
+          {!isGravity && (
+            <>
+              <Num label="C₆ Toe 길이 (m)" value={f.C6_toe} step={0.1}
+                onChange={(v) => set({ C6_toe: v })} />
+              {!isRevL && (
+                <Num label="C₈ Heel 길이 (m)" value={f.C8_heel} step={0.1}
+                  onChange={(v) => set({ C8_heel: v })} />
+              )}
+              <Num label="D 저판 두께 (m)" value={f.D_slab} step={0.05}
+                onChange={(v) => set({ D_slab: v })} />
+              <Num label="D' 저판 끝 두께 (m)" value={f.D_slab_end} step={0.05}
+                onChange={(v) => set({ D_slab_end: v })} />
+              <Num label="접합부 높이 (m)" value={f.conn_h} step={0.05}
+                onChange={(v) => set({ conn_h: v })} />
+            </>
+          )}
+
+          <Num label="여유고 (m)" value={f.Hs_gap} step={0.05}
+            onChange={(v) => set({ Hs_gap: v })} />
+        </div>
+
+        <div className="mt-2 rounded bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs text-blue-800 space-y-0.5">
+          <div><strong>H</strong>(총높이) = {H.toFixed(3)} m &nbsp;|&nbsp; <strong>B</strong>(총폭) = {B.toFixed(3)} m</div>
+          <div><strong>t₁</strong>(상단) = {t_stem.toFixed(3)} m &nbsp;|&nbsp; <strong>Hs</strong>(뒤채움) = {Hs_soil.toFixed(3)} m</div>
+        </div>
+      </Section>
+
+      {/* 지반 / 하중 */}
+      <Section title="지반 / 하중" defaultOpen>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="단위중량 gamma_t (kN/m3)" value={f.gamma_t} step={0.5}
+            onChange={(v) => set({ gamma_t: v })} />
+          <Num label="내부마찰각 phi (deg)" value={f.phi_deg} step={1}
+            onChange={(v) => set({ phi_deg: v })} />
+          <Num label="점착력 c (kPa)" value={f.c_soil} step={1}
+            onChange={(v) => set({ c_soil: v })} />
+          <Num label="경사각 alpha (deg)" value={f.alpha_deg} step={1}
+            onChange={(v) => set({ alpha_deg: v })} />
+          <Num label="토피고 Df (m)" value={f.Df} step={0.1}
+            onChange={(v) => set({ Df: v })} />
+          <Num label="과재하중 q (kN/m2)" value={f.q} step={1}
+            onChange={(v) => set({ q: v })} />
+          <Num label="콘크리트 단위중량 (kN/m3)" value={f.gamma_c} step={0.5}
+            onChange={(v) => set({ gamma_c: v })} />
+        </div>
+      </Section>
+
+      {/* 철근 배근 */}
+      {(!isGravity || f.semi_gravity) && (
+        <Section title="철근 배근">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <RebarSelect label="B-B(Heel) 직경" value={f.rebar1_dia}
+              onChange={(v) => set({ rebar1_dia: v })} />
+            <Num label="B-B 간격 (mm)" value={f.rebar1_spacing} step={25}
+              onChange={(v) => set({ rebar1_spacing: v })} />
+            <RebarSelect label="C-C(벽체하부) 직경" value={f.rebar2_dia}
+              onChange={(v) => set({ rebar2_dia: v })} />
+            <Num label="C-C 간격 (mm)" value={f.rebar2_spacing} step={25}
+              onChange={(v) => set({ rebar2_spacing: v })} />
+          </div>
+        </Section>
+      )}
+
+      {/* 내진설계 */}
+      <Section title="내진설계">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="수평가속도계수 Kh" value={f.Kh} step={0.001}
+            onChange={(v) => set({ Kh: v })} />
+        </div>
+      </Section>
+
+      {/* 재료 / 피복 */}
+      <Section title="재료 / 피복">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="fck (MPa)" value={f.fck} step={3}
+            onChange={(v) => set({ fck: v })} />
+          <Num label="fy (MPa)" value={f.fy} step={100}
+            onChange={(v) => set({ fy: v })} />
+          {(!isGravity || f.semi_gravity) && (
+            <>
+              <Num label="저판 피복 Dc_slab (mm)" value={f.Dc_slab} step={10}
+                onChange={(v) => set({ Dc_slab: v })} />
+              <Num label="벽체 피복 Dc_wall (mm)" value={f.Dc_wall} step={10}
+                onChange={(v) => set({ Dc_wall: v })} />
+            </>
+          )}
+        </div>
+      </Section>
+
+      {/* 지지력 */}
+      <Section title="지지력 옵션">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="고정 허용지지력 qa (kN/m2)" value={f.qa_fixed} step={10}
+            onChange={(v) => set({ qa_fixed: v })} />
+          <Num label="지진시 지지력 qae (kN/m2)" value={f.qae_fixed} step={10}
+            onChange={(v) => set({ qae_fixed: v })} />
+        </div>
+        <p className="text-xs text-gray-400 mt-1">0이면 Terzaghi 공식 자동 계산</p>
+      </Section>
+
+      {/* 지하수위 */}
+      <Section title="지하수위">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="지하수위 높이 (m)" value={f.gwl_height} step={0.1}
+            onChange={(v) => set({ gwl_height: v })} />
+          <Num label="포화단위중량 (kN/m3)" value={f.gamma_sat} step={0.5}
+            onChange={(v) => set({ gamma_sat: v })} />
+        </div>
+      </Section>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub-components                                                     */
+/* ------------------------------------------------------------------ */
+
+function Section({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <details open={defaultOpen || undefined} className="group border border-gray-200 rounded-lg">
+      <summary className="cursor-pointer select-none px-3 py-2 bg-gray-100 rounded-t-lg font-semibold text-gray-700 text-sm hover:bg-gray-200">
+        {title}
+      </summary>
+      <div className="px-3 py-2">{children}</div>
+    </details>
+  )
+}
+
+function Num({
+  label,
+  value,
+  step = 1,
+  onChange,
+}: {
+  label: string
+  value: number
+  step?: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className="text-xs text-gray-500 truncate">{label}</span>
+      <input
+        type="number"
+        value={value}
+        step={step}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+      />
+    </label>
+  )
+}
+
+function RebarSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className="text-xs text-gray-500 truncate">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+      >
+        {REBAR_DIAS.map((d) => (
+          <option key={d} value={d}>D{d}</option>
+        ))}
+      </select>
+    </label>
+  )
+}

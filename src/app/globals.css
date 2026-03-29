@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* scrollbar for form panel */
+aside::-webkit-scrollbar {
+  width: 6px;
+}
+aside::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* number input spinner hide for cleaner look */
+input[type="number"]::-webkit-inner-spin-button {
+  opacity: 1;
+}
