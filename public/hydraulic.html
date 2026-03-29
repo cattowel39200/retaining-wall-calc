@@ -733,7 +733,7 @@ let state = {
   activeTab: 'input',
   project: {
     name: '우수관로 수리계산서',
-    location: '${currentRegion}',
+    location: '김해',
     company: '주식회사 경성엔지니어링',
     designer: '안세종',
     date: '2025-02-20',
@@ -1039,6 +1039,7 @@ function renderHeader() {
 
 function changeRegion(region) {
   currentRegion = region;
+  state.project.location = region;
   computeAll();
   render();
 }
