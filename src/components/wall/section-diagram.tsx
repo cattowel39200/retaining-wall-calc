@@ -43,8 +43,8 @@ export default function SectionDiagram({
   const py = (m: number) => oy - m * sc
 
   // dimension helper
-  const dims: JSX.Element[] = []
-  const labels: JSX.Element[] = []
+  const dims: React.ReactNode[] = []
+  const labels: React.ReactNode[] = []
 
   function hDim(x1: number, x2: number, y: number, label: string, side: 'top' | 'bottom' = 'top') {
     const sx1 = px(x1), sx2 = px(x2), sy = py(y)
