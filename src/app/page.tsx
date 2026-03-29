@@ -38,7 +38,7 @@ export default function LandingPage() {
                 옹벽 구조검토
               </Link>
               <a
-                href="/hydraulic.html"
+                href="/hydro"
                 className="rounded-lg bg-emerald-500 px-8 py-3.5 text-lg font-bold text-white shadow-lg hover:bg-emerald-600 transition-colors"
               >
                 수리계산서
@@ -90,7 +90,7 @@ export default function LandingPage() {
               <p className="mt-2 text-sm text-blue-600">L형, 역L형, 역T형, 중력식 4종 옹벽. KDS 기준 안정검토 + 단면검토 + Word 보고서 자동 생성.</p>
               <div className="mt-4 text-sm font-bold text-blue-700">시작하기 →</div>
             </Link>
-            <a href="/hydraulic.html" className="block rounded-xl border-2 border-emerald-200 bg-emerald-50 p-8 hover:border-emerald-400 hover:shadow-lg transition-all">
+            <a href="/hydro" className="block rounded-xl border-2 border-emerald-200 bg-emerald-50 p-8 hover:border-emerald-400 hover:shadow-lg transition-all">
               <div className="text-3xl mb-3">🌊</div>
               <h3 className="text-xl font-bold text-emerald-800">우수 수리계산서</h3>
               <p className="mt-2 text-sm text-emerald-600">강우강도식, Manning 유속, 원형관/BOX/U형 수로. 구간별 수리검토 + 보고서 인쇄.</p>
@@ -264,7 +264,7 @@ export default function LandingPage() {
             </div>
             <div className="flex gap-6 text-sm text-gray-500">
               <Link href="/calc" className="hover:text-blue-600">옹벽 구조검토</Link>
-              <a href="/hydraulic.html" className="hover:text-emerald-600">수리계산서</a>
+              <a href="/hydro" className="hover:text-emerald-600">수리계산서</a>
               <a href="#features" className="hover:text-blue-600">기능</a>
               <a href="#pricing" className="hover:text-blue-600">요금</a>
               <a href="mailto:structcheck@gmail.com" className="hover:text-blue-600">문의</a>
