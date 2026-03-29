@@ -63,6 +63,7 @@ export default function Home() {
     <div className="flex gap-4 p-4 min-h-[calc(100vh-56px)]">
       {/* ===== 좌측: 입력 패널 ===== */}
       <aside className="w-80 shrink-0 overflow-y-auto max-h-[calc(100vh-72px)] bg-white rounded-xl border border-gray-200 p-4">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">옹벽 구조검토</h2>
         <WallForm fields={fields} onChange={setFields} />
 
         <div className="mt-4 space-y-2">

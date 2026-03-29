@@ -69,6 +69,7 @@ export default function HydroPage() {
     <div className="flex gap-4 p-4 min-h-[calc(100vh-56px)]">
       {/* ===== 좌측: 입력 패널 ===== */}
       <aside className="w-80 shrink-0 overflow-y-auto max-h-[calc(100vh-72px)] bg-white rounded-xl border border-gray-200 p-4 space-y-1">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">우수 수리계산</h2>
         {/* 지역 선택 */}
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-medium text-gray-600">지역</span>
