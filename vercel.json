@@ -1,17 +1,18 @@
 {
-  "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "functions": {
-    "py/*.py": {
+    "api/*.py": {
       "runtime": "@vercel/python@4.5.0",
       "maxDuration": 30
     }
   },
-  "rewrites": [
-    { "source": "/api/calculate", "destination": "/py/calculate" },
-    { "source": "/api/section-image", "destination": "/py/section_image" },
-    { "source": "/api/rebar-image", "destination": "/py/rebar_image" },
-    { "source": "/api/report", "destination": "/py/report" }
+  "routes": [
+    { "src": "/api/calculate", "dest": "/api/calculate.py" },
+    { "src": "/api/section-image", "dest": "/api/section_image.py" },
+    { "src": "/api/rebar-image", "dest": "/api/rebar_image.py" },
+    { "src": "/api/report", "dest": "/api/report.py" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
