@@ -22,7 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span className="hidden sm:inline text-xs text-gray-400">구조검토 클라우드</span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <Link href="/calc" className="text-gray-600 hover:text-blue-600 font-medium">구조검토</Link>
+            <Link href="/calc" className="text-gray-600 hover:text-blue-600 font-medium">옹벽 구조검토</Link>
+            <a href="/hydraulic.html" className="text-gray-600 hover:text-emerald-600 font-medium">수리계산서</a>
             <Link href="/#pricing" className="text-gray-600 hover:text-blue-600 font-medium">요금</Link>
             <Link
               href="/calc"

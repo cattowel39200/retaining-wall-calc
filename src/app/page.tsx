@@ -23,20 +23,26 @@ export default function LandingPage() {
               KDS 11 80 05 / KDS 14 20 20 완전 반영
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              구조검토,<br />
+              건설 엔지니어링,<br />
               <span className="text-blue-300">웹에서 바로.</span>
             </h1>
             <p className="mt-6 text-lg text-blue-100 sm:text-xl max-w-2xl">
-              설치 없이 브라우저에서 옹벽 구조검토를 즉시 수행하고,
-              Word 보고서를 자동 생성합니다. 무료로 시작하세요.
+              설치 없이 브라우저에서 옹벽 구조검토와 우수 수리계산을 즉시 수행하고,
+              보고서를 자동 생성합니다. 무료로 시작하세요.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
               <Link
                 href="/calc"
                 className="rounded-lg bg-white px-8 py-3.5 text-lg font-bold text-blue-900 shadow-lg hover:bg-blue-50 transition-colors"
               >
-                무료로 시작하기
+                옹벽 구조검토
               </Link>
+              <a
+                href="/hydraulic.html"
+                className="rounded-lg bg-emerald-500 px-8 py-3.5 text-lg font-bold text-white shadow-lg hover:bg-emerald-600 transition-colors"
+              >
+                수리계산서
+              </a>
               <a
                 href="#features"
                 className="rounded-lg border-2 border-white/30 px-8 py-3.5 text-lg font-medium hover:bg-white/10 transition-colors"
@@ -51,10 +57,11 @@ export default function LandingPage() {
       {/* Stats */}
       <section className="border-b bg-gray-50 py-12">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4 text-center">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-5 text-center">
             {[
-              ['4종', '옹벽 형식 지원'],
-              ['KDS', '최신 기준 반영'],
+              ['2종', '검토 프로그램'],
+              ['4종', '옹벽 형식'],
+              ['KDS', '최신 기준'],
               ['즉시', '결과 확인'],
               ['무료', '지금 바로'],
             ].map(([num, label]) => (
@@ -72,15 +79,33 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="text-center text-3xl font-bold text-gray-900">왜 StructCheck인가?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-gray-500">
-            기존 고가의 설치형 프로그램 대신, 웹 브라우저 하나로 구조검토를 완료합니다.
+            기존 고가의 설치형 프로그램 대신, 웹 브라우저 하나로 건설 엔지니어링 검토를 완료합니다.
           </p>
 
-          <div className="mt-16 grid gap-8 md:grid-cols-3">
+          {/* 서비스 카드 2개 */}
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <Link href="/calc" className="block rounded-xl border-2 border-blue-200 bg-blue-50 p-8 hover:border-blue-400 hover:shadow-lg transition-all">
+              <div className="text-3xl mb-3">📐</div>
+              <h3 className="text-xl font-bold text-blue-800">옹벽 구조검토</h3>
+              <p className="mt-2 text-sm text-blue-600">L형, 역L형, 역T형, 중력식 4종 옹벽. KDS 기준 안정검토 + 단면검토 + Word 보고서 자동 생성.</p>
+              <div className="mt-4 text-sm font-bold text-blue-700">시작하기 →</div>
+            </Link>
+            <a href="/hydraulic.html" className="block rounded-xl border-2 border-emerald-200 bg-emerald-50 p-8 hover:border-emerald-400 hover:shadow-lg transition-all">
+              <div className="text-3xl mb-3">🌊</div>
+              <h3 className="text-xl font-bold text-emerald-800">우수 수리계산서</h3>
+              <p className="mt-2 text-sm text-emerald-600">강우강도식, Manning 유속, 원형관/BOX/U형 수로. 구간별 수리검토 + 보고서 인쇄.</p>
+              <div className="mt-4 text-sm font-bold text-emerald-700">시작하기 →</div>
+            </a>
+          </div>
+
+          <h3 className="text-center text-2xl font-bold text-gray-900 mt-16 mb-4">주요 기능</h3>
+
+          <div className="mt-8 grid gap-8 md:grid-cols-3">
             {[
               {
                 icon: '🌐',
                 title: '설치 불필요',
-                desc: '브라우저에서 바로 실행. PC, 태블릿, 어디서든 접속하여 구조검토를 수행합니다.',
+                desc: '브라우저에서 바로 실행. PC, 태블릿, 어디서든 접속하여 검토를 수행합니다.',
               },
               {
                 icon: '📐',
@@ -88,19 +113,19 @@ export default function LandingPage() {
                 desc: 'L형, 역L형, 역T형, 중력식/반중력식 옹벽을 하나의 화면에서 검토합니다.',
               },
               {
+                icon: '🌊',
+                title: '우수 수리계산',
+                desc: '강우강도, Manning 유속, Rational Method. 원형관, BOX, U형 수로 검토.',
+              },
+              {
                 icon: '📄',
-                title: 'Word 보고서 자동',
-                desc: '입력 즉시 KDS 기준 구조계산서(Word)를 자동 생성하여 다운로드합니다.',
+                title: '보고서 자동',
+                desc: '옹벽 Word 보고서, 수리계산서 인쇄. 입력 즉시 자동 생성합니다.',
               },
               {
                 icon: '✅',
                 title: 'KDS 기준 100%',
-                desc: 'KDS 11 80 05, KDS 14 20 20 기준을 완전 반영. 안정검토 + 단면검토 + 균열검토.',
-              },
-              {
-                icon: '📊',
-                title: '실시간 단면도',
-                desc: '입력값 변경 즉시 SVG 표준단면도가 업데이트됩니다. 기호와 치수선 포함.',
+                desc: 'KDS 11 80 05, KDS 14 20 20 기준 완전 반영. 안정검토 + 단면검토 + 균열검토.',
               },
               {
                 icon: '💰',
@@ -165,8 +190,9 @@ export default function LandingPage() {
               <ul className="mt-6 space-y-3 text-sm text-gray-600">
                 {[
                   '옹벽 4종 (L형/역L형/역T형/중력식)',
+                  '우수 수리계산서 (관/BOX/수로)',
                   '안정검토 + 단면검토 + 부재설계',
-                  'Word 보고서 자동 생성',
+                  'Word 보고서 / 수리계산서 인쇄',
                   'SVG 표준단면도',
                   '회원가입 불필요',
                 ].map((f) => (
@@ -237,7 +263,8 @@ export default function LandingPage() {
               <div className="text-sm text-gray-500">구조검토 클라우드 SaaS</div>
             </div>
             <div className="flex gap-6 text-sm text-gray-500">
-              <Link href="/calc" className="hover:text-blue-600">구조검토</Link>
+              <Link href="/calc" className="hover:text-blue-600">옹벽 구조검토</Link>
+              <a href="/hydraulic.html" className="hover:text-emerald-600">수리계산서</a>
               <a href="#features" className="hover:text-blue-600">기능</a>
               <a href="#pricing" className="hover:text-blue-600">요금</a>
               <a href="mailto:structcheck@gmail.com" className="hover:text-blue-600">문의</a>
