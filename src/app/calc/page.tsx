@@ -3,36 +3,28 @@
 import { useState, useCallback } from 'react'
 import type { WallFormFields } from '@/types/wall'
 import { getDefaultFormFields, formToInput } from '@/types/wall'
-import { calculateWall, getSectionImage, getRebarImage, downloadReport, svgToPngBase64 } from '@/lib/api'
+import { calculateWall, downloadReport, svgToPngBase64 } from '@/lib/api'
 import WallForm from '@/components/wall/wall-form'
 import ResultMetric from '@/components/wall/result-metric'
 
-type Tab = 'section' | 'stability' | 'member' | 'design'
+type Tab = 'stability' | 'member' | 'design'
 
 export default function Home() {
   const [fields, setFields] = useState<WallFormFields>(getDefaultFormFields('L형'))
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [results, setResults] = useState<any>(null)
-  const [sectionImg, setSectionImg] = useState<string | null>(null)
-  const [rebarImg, setRebarImg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('section')
+  const [activeTab, setActiveTab] = useState<Tab>('stability')
 
   const handleCalculate = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const input = formToInput(fields)
-      const [data, secUrl, rebUrl] = await Promise.all([
-        calculateWall(input),
-        getSectionImage(input),
-        getRebarImage(input),
-      ])
+      const data = await calculateWall(input)
       setResults(data)
-      setSectionImg(secUrl)
-      setRebarImg(rebUrl)
-      setActiveTab('section')
+      setActiveTab('stability')
     } catch (e: any) {
       setError(e.message || '계산 중 오류가 발생했습니다.')
     } finally {
@@ -62,7 +54,6 @@ export default function Home() {
   const ep = results?.earth_pressure
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'section', label: '단면도' },
     { key: 'stability', label: '안정검토' },
     { key: 'member', label: '단면검토' },
     { key: 'design', label: '부재설계' },
@@ -138,9 +129,6 @@ export default function Home() {
 
             {/* 탭 콘텐츠 */}
             <div className="flex-1 overflow-y-auto p-4">
-              {activeTab === 'section' && (
-                <TabSection sectionImg={sectionImg} rebarImg={rebarImg} isGravity={j?.is_gravity} />
-              )}
               {activeTab === 'stability' && stab && j && (
                 <TabStability stab={stab} j={j} blocks={blocks} ep={ep} />
               )}
@@ -161,39 +149,6 @@ export default function Home() {
 /* ====================================================================
    Tab Components
    ==================================================================== */
-
-function TabSection({
-  sectionImg,
-  rebarImg,
-  isGravity,
-}: {
-  sectionImg: string | null
-  rebarImg: string | null
-  isGravity: boolean
-}) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold text-gray-700 mb-2">단면도</h3>
-        {sectionImg ? (
-          <img src={sectionImg} alt="단면도" className="max-w-full border rounded" />
-        ) : (
-          <p className="text-gray-400">이미지 없음</p>
-        )}
-      </div>
-      {!isGravity && (
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-2">배근도</h3>
-          {rebarImg ? (
-            <img src={rebarImg} alt="배근도" className="max-w-full border rounded" />
-          ) : (
-            <p className="text-gray-400">이미지 없음</p>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function TabStability({ stab, j, blocks, ep }: { stab: any; j: any; blocks?: any; ep?: any }) {
