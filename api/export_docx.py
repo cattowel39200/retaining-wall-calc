@@ -9,7 +9,7 @@ from docx import Document
 from docx.shared import Pt, Cm, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from draw_section import draw_cross_section
+# draw_section removed for Vercel deployment (matplotlib too large)
 
 
 def _f3(v):
@@ -122,22 +122,7 @@ def export_report(params: dict, results: dict) -> bytes:
     # ================================================================
     _add_heading(doc, '1. 일반 단면', 1)
 
-    # 단면도 삽입
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        fig = draw_cross_section(p, show_gwl=(p.get('gwl_height', 0) > 0))
-        img_buf = io.BytesIO()
-        fig.savefig(img_buf, format='png', dpi=150, bbox_inches='tight')
-        plt.close(fig)
-        img_buf.seek(0)
-        doc.add_picture(img_buf, width=Cm(15))
-        # 그림 가운데 정렬
-        last_paragraph = doc.paragraphs[-1]
-        last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    except Exception:
-        _add_para(doc, '  [단면도 생성 실패]')
+    _add_para(doc, '  [단면도: 웹 화면에서 확인]')
 
     _is_gravity = (wall_type == '중력식')
     _is_semi_gravity = p.get('semi_gravity', False) and _is_gravity

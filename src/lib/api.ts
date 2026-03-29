@@ -23,16 +23,24 @@ export async function calculateWall(params: WallInput): Promise<any> {
   return json.data
 }
 
-export async function getSectionImage(params: WallInput): Promise<string> {
-  const res = await postJSON('/api/section-image', params)
-  const blob = await res.blob()
-  return URL.createObjectURL(blob)
+export async function getSectionImage(params: WallInput): Promise<string | null> {
+  try {
+    const res = await postJSON('/api/section-image', params)
+    const blob = await res.blob()
+    return URL.createObjectURL(blob)
+  } catch {
+    return null // matplotlib not available on Vercel
+  }
 }
 
-export async function getRebarImage(params: WallInput): Promise<string> {
-  const res = await postJSON('/api/rebar-image', params)
-  const blob = await res.blob()
-  return URL.createObjectURL(blob)
+export async function getRebarImage(params: WallInput): Promise<string | null> {
+  try {
+    const res = await postJSON('/api/rebar-image', params)
+    const blob = await res.blob()
+    return URL.createObjectURL(blob)
+  } catch {
+    return null
+  }
 }
 
 export async function downloadReport(params: WallInput): Promise<void> {

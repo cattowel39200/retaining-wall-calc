@@ -9,8 +9,6 @@
   },
   "routes": [
     { "src": "/api/calculate", "dest": "/api/calculate.py" },
-    { "src": "/api/section-image", "dest": "/api/section_image.py" },
-    { "src": "/api/rebar-image", "dest": "/api/rebar_image.py" },
     { "src": "/api/report", "dest": "/api/report.py" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
