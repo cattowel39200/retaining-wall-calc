@@ -3,15 +3,15 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "functions": {
-    "api/*.py": {
+    "py/*.py": {
       "runtime": "@vercel/python@4.5.0",
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/calculate", "destination": "/api/calculate" },
-    { "source": "/api/section-image", "destination": "/api/section_image" },
-    { "source": "/api/rebar-image", "destination": "/api/rebar_image" },
-    { "source": "/api/report", "destination": "/api/report" }
+    { "source": "/api/calculate", "destination": "/py/calculate" },
+    { "source": "/api/section-image", "destination": "/py/section_image" },
+    { "source": "/api/rebar-image", "destination": "/py/rebar_image" },
+    { "source": "/api/report", "destination": "/py/report" }
   ]
 }
