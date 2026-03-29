@@ -12,32 +12,38 @@ const _f1 = (v: number | null | undefined) => v != null ? v.toFixed(1) : '-'
 const _f0 = (v: number | null | undefined) => v != null ? v.toFixed(0) : '-'
 
 /* ── 유틸 ── */
-function cell(text: string, bold = false, align: typeof AlignmentType[keyof typeof AlignmentType] = AlignmentType.CENTER) {
-  return new TableCell({
+function cell(text: string, bold = false, align: typeof AlignmentType[keyof typeof AlignmentType] = AlignmentType.CENTER, widthPct = 0) {
+  const cellOpts: any = {
     children: [new Paragraph({
       alignment: align,
+      spacing: { before: 20, after: 20 },
       children: [new TextRun({ text, bold, size: 16, font: 'Malgun Gothic' })],
     })],
-    width: { size: 0, type: WidthType.AUTO },
     borders: {
       top: { style: BorderStyle.SINGLE, size: 1 },
       bottom: { style: BorderStyle.SINGLE, size: 1 },
       left: { style: BorderStyle.SINGLE, size: 1 },
       right: { style: BorderStyle.SINGLE, size: 1 },
     },
-  })
+  }
+  if (widthPct > 0) {
+    cellOpts.width = { size: widthPct, type: WidthType.PERCENTAGE }
+  }
+  return new TableCell(cellOpts)
 }
 
-function makeTable(headers: string[], rows: string[][]) {
+function makeTable(headers: string[], rows: string[][], colWidths?: number[]) {
+  const widths = colWidths || headers.map(() => Math.floor(100 / headers.length))
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    columnWidths: widths.map(w => Math.round(w * 90)),
     rows: [
       new TableRow({
-        children: headers.map(h => cell(h, true)),
+        children: headers.map((h, i) => cell(h, true, AlignmentType.CENTER, widths[i])),
         tableHeader: true,
       }),
       ...rows.map(r => new TableRow({
-        children: r.map(c => cell(c)),
+        children: r.map((c, i) => cell(c, false, AlignmentType.CENTER, widths[i])),
       })),
     ],
   })
