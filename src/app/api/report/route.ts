@@ -3,6 +3,7 @@ import { calculateWall } from '@/lib/calc-engine'
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak,
+  ImageRun,
 } from 'docx'
 
 /* ── 수치 포맷 ── */
@@ -69,7 +70,7 @@ function pageBreak() {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function buildDocument(p: any, r: any): Document {
+function buildDocument(p: any, r: any, sectionImage?: string): Document {
   const wallType = p.wall_type || 'L형'
   const jdg = r.judgment
   const stab = r.stability
@@ -112,7 +113,24 @@ function buildDocument(p: any, r: any): Document {
   children.push(heading('1. 일반 단면'))
 
   // 단면도 (웹에서 확인)
-  children.push(para('  [단면도: 웹 화면에서 확인]'))
+  // 단면도 삽입
+  if (sectionImage) {
+    try {
+      const imgBuffer = Buffer.from(sectionImage, 'base64')
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new ImageRun({
+          data: imgBuffer,
+          transformation: { width: 450, height: 330 },
+          type: 'png',
+        })],
+      }))
+    } catch {
+      children.push(para('  [단면도 삽입 실패]'))
+    }
+  } else {
+    children.push(para('  [단면도: 웹 화면에서 확인]'))
+  }
 
   children.push(heading('1.1 옹벽의 제원', HeadingLevel.HEADING_2))
   if (_is_gravity) {
@@ -770,9 +788,10 @@ function buildDocument(p: any, r: any): Document {
 
 export async function POST(request: NextRequest) {
   try {
-    const params = await request.json()
+    const body = await request.json()
+    const { sectionImage, ...params } = body
     const results = calculateWall(params)
-    const doc = buildDocument(params, results)
+    const doc = buildDocument(params, results, sectionImage || undefined)
     const buffer = await Packer.toBuffer(doc)
     const uint8 = new Uint8Array(buffer)
 

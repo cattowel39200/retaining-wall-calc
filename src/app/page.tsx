@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import type { WallFormFields } from '@/types/wall'
 import { getDefaultFormFields, formToInput } from '@/types/wall'
-import { calculateWall, getSectionImage, getRebarImage, downloadReport } from '@/lib/api'
+import { calculateWall, getSectionImage, getRebarImage, downloadReport, svgToPngBase64 } from '@/lib/api'
 import WallForm from '@/components/wall/wall-form'
 import ResultMetric from '@/components/wall/result-metric'
 
@@ -42,7 +42,13 @@ export default function Home() {
 
   const handleDownload = useCallback(async () => {
     try {
-      await downloadReport(formToInput(fields))
+      // SVG 단면도를 PNG로 캡처
+      let sectionBase64: string | undefined
+      const svgEl = document.querySelector('.section-diagram-svg') as SVGSVGElement | null
+      if (svgEl) {
+        sectionBase64 = await svgToPngBase64(svgEl)
+      }
+      await downloadReport(formToInput(fields), sectionBase64)
     } catch (e: any) {
       setError(e.message || '보고서 다운로드 오류')
     }

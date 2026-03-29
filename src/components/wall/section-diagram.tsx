@@ -175,7 +175,7 @@ export default function SectionDiagram({
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-2">
       <div className="text-xs font-semibold text-center text-gray-600 mb-1">{wallType} 표준단면도</div>
-      <svg viewBox={`0 0 ${vw} ${vh}`} className="w-full" style={{ maxHeight: 220 }}>
+      <svg viewBox={`0 0 ${vw} ${vh}`} className="w-full section-diagram-svg" style={{ maxHeight: 220 }} xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="arr" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto">
             <path d="M0,0 L6,2 L0,4" fill="#e53e3e" />
