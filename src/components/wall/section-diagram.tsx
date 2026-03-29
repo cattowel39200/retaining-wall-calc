@@ -92,42 +92,55 @@ export default function SectionDiagram({
     }
   } else {
     // RC wall (L, 역L, 역T)
-    const wallLeft = c6Toe + batter
-    const wallRight = c6Toe + batter + stemTop
-    const wallLeftBot = c6Toe
-    const wallRightBot = c6Toe + tBot
+    // 원본 draw_section.py 좌표계:
+    //   벽체 오른쪽 면 = C6_toe 위치 (전면측)
+    //   벽체 왼쪽 면 = C6_toe - t_stem
+    //   Heel은 벽체 오른쪽(배면측)으로 연장
+    // 즉, 저판 좌측이 전면, 우측이 배면
+    //
+    // L형: Toe 짧고 벽체가 전면 끝 쪽, Heel이 배면으로 김
+    // 역L형: Toe 길고 Heel 없음, 벽체가 배면 끝 쪽
+    // 역T형: Toe/Heel 모두 있음
+
+    // 벽체 위치 (원본 기준: 벽체 상단 오른쪽 = C6_toe)
+    const wallTopLeft = c6Toe - stemTop    // 벽체 상단 왼쪽 (전면)
+    const wallTopRight = c6Toe             // 벽체 상단 오른쪽 (배면측 면)
+    const wallBotLeft = c6Toe - stemTop - batter  // 벽체 하단 왼쪽 (전면 경사)
+    const wallBotRight = c6Toe + batterBack       // 벽체 하단 오른쪽 (배면 경사)
 
     // wall polygon (trapezoid)
-    wallPoly = `${px(wallLeft)},${py(H)} ${px(wallRight)},${py(H)} ${px(wallRightBot)},${py(dSlab)} ${px(wallLeftBot)},${py(dSlab)}`
+    wallPoly = `${px(wallTopLeft)},${py(H)} ${px(wallTopRight)},${py(H)} ${px(wallBotRight)},${py(dSlab)} ${px(wallBotLeft)},${py(dSlab)}`
 
     // footing slab
     slabPoly = `${px(0)},${py(dSlab)} ${px(B)},${py(dSlab)} ${px(B)},${py(0)} ${px(0)},${py(0)}`
 
     // dims
-    hDim(wallLeft, wallRight, H + 0.08 * H, `t₁=${stemTop.toFixed(2)}`)
+    hDim(wallTopLeft, wallTopRight, H + 0.08 * H, `t₁=${stemTop.toFixed(2)}`)
     vDim(B + 0.08 * B, 0, H, `H=${H.toFixed(2)}`)
     vDim(B + 0.08 * B, 0, dSlab, `D=${dSlab.toFixed(2)}`)
     hDim(0, B, -0.1 * H, `B=${B.toFixed(2)}`)
 
     if (c6Toe > 0.01) hDim(0, c6Toe, -0.02 * H, `C₆=${c6Toe.toFixed(2)}`)
-    if (c8Heel > 0.01) hDim(c6Toe + tBot, B, -0.02 * H, `C₈=${c8Heel.toFixed(2)}`)
+    if (c8Heel > 0.01) hDim(c6Toe + batterBack, B, -0.02 * H, `C₈=${c8Heel.toFixed(2)}`)
 
-    vDim(wallLeft - 0.06 * B, dSlab, H, `H_s=${hStem.toFixed(2)}`)
+    vDim(wallBotLeft - 0.06 * B, dSlab, H, `Hₛ=${hStem.toFixed(2)}`)
 
-    if (batter > 0) hDim(wallLeftBot, wallLeft, dSlab + hStem * 0.3, `C₁=${batter.toFixed(2)}`)
-    if (batterBack > 0) hDim(wallRight, wallRightBot, dSlab + hStem * 0.3, `C₃=${batterBack.toFixed(2)}`)
+    if (batter > 0) hDim(wallBotLeft, wallTopLeft, dSlab + hStem * 0.3, `C₁=${batter.toFixed(2)}`)
+    if (batterBack > 0) hDim(wallTopRight, wallBotRight, dSlab + hStem * 0.3, `C₃=${batterBack.toFixed(2)}`)
 
-    // soil
+    // soil (배면측: 벽체 오른쪽 ~ 저판 끝)
     const soilH = hStem - hsGap
     if (soilH > 0) {
       const soilTop = dSlab + soilH
-      soilPoly = `${px(wallRightBot)},${py(soilTop)} ${px(B)},${py(soilTop)} ${px(B)},${py(dSlab)} ${px(wallRightBot)},${py(dSlab)}`
+      soilPoly = `${px(wallBotRight)},${py(soilTop)} ${px(B)},${py(soilTop)} ${px(B)},${py(dSlab)} ${px(wallBotRight)},${py(dSlab)}`
     }
   }
 
   // section labels
   if (!isGravity) {
-    const wallCx = px(c6Toe + tBot / 2)
+    const wallBotRight = c6Toe + batterBack
+    const wallBotLeft = c6Toe - stemTop - batter
+    const wallCx = px((wallBotLeft + wallBotRight) / 2)
     const wallMidY = py(dSlab + hStem * 0.5)
     labels.push(
       <text key="lbl-wall" x={wallCx} y={wallMidY} textAnchor="middle" fontSize={8} fill="#4a5568">벽체</text>
@@ -140,33 +153,34 @@ export default function SectionDiagram({
     // C-C (wall bottom)
     labels.push(
       <g key="cut-cc">
-        <line x1={px(c6Toe - 0.15 * B)} y1={py(dSlab)} x2={px(c6Toe + tBot + 0.05 * B)} y2={py(dSlab)} {...cutStyle} />
-        <text x={px(c6Toe - 0.18 * B)} y={py(dSlab) + 3} fontSize={6} fill="#3182ce" fontWeight="bold">C-C</text>
+        <line x1={px(wallBotLeft - 0.1 * B)} y1={py(dSlab)} x2={px(wallBotRight + 0.05 * B)} y2={py(dSlab)} {...cutStyle} />
+        <text x={px(wallBotLeft - 0.14 * B)} y={py(dSlab) + 3} fontSize={6} fill="#3182ce" fontWeight="bold">C-C</text>
       </g>
     )
     // D-D (wall mid)
     const ddY = dSlab + hStem / 2
     labels.push(
       <g key="cut-dd">
-        <line x1={px(c6Toe - 0.1 * B)} y1={py(ddY)} x2={px(c6Toe + tBot + 0.03 * B)} y2={py(ddY)} {...cutStyle} />
-        <text x={px(c6Toe - 0.14 * B)} y={py(ddY) + 3} fontSize={6} fill="#3182ce" fontWeight="bold">D-D</text>
+        <line x1={px(wallBotLeft - 0.06 * B)} y1={py(ddY)} x2={px(wallBotRight + 0.03 * B)} y2={py(ddY)} {...cutStyle} />
+        <text x={px(wallBotLeft - 0.10 * B)} y={py(ddY) + 3} fontSize={6} fill="#3182ce" fontWeight="bold">D-D</text>
       </g>
     )
-    // B-B (heel)
+    // B-B (heel — 벽체 배면측)
     if (c8Heel > 0.01) {
       labels.push(
         <g key="cut-bb">
-          <line x1={px(c6Toe + tBot)} y1={py(-0.03 * H)} x2={px(c6Toe + tBot)} y2={py(dSlab + 0.05 * H)} {...cutStyle} />
-          <text x={px(c6Toe + tBot) + 3} y={py(dSlab + 0.08 * H)} fontSize={6} fill="#3182ce" fontWeight="bold">B-B</text>
+          <line x1={px(wallBotRight)} y1={py(-0.03 * H)} x2={px(wallBotRight)} y2={py(dSlab + 0.05 * H)} {...cutStyle} />
+          <text x={px(wallBotRight) + 3} y={py(dSlab + 0.08 * H)} fontSize={6} fill="#3182ce" fontWeight="bold">B-B</text>
         </g>
       )
     }
-    // A-A (toe)
-    if (c6Toe > 0.15) {
+    // A-A (toe — 벽체 전면측)
+    const toeEff = Math.max(c6Toe - stemTop - batter, 0)
+    if (toeEff > 0.15) {
       labels.push(
         <g key="cut-aa">
-          <line x1={px(c6Toe)} y1={py(-0.03 * H)} x2={px(c6Toe)} y2={py(dSlab + 0.05 * H)} {...cutStyle} />
-          <text x={px(c6Toe) - 12} y={py(dSlab + 0.08 * H)} fontSize={6} fill="#3182ce" fontWeight="bold">A-A</text>
+          <line x1={px(wallBotLeft)} y1={py(-0.03 * H)} x2={px(wallBotLeft)} y2={py(dSlab + 0.05 * H)} {...cutStyle} />
+          <text x={px(wallBotLeft) - 12} y={py(dSlab + 0.08 * H)} fontSize={6} fill="#3182ce" fontWeight="bold">A-A</text>
         </g>
       )
     }
