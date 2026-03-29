@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: sanitize(results) })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
+    // 입력값 검증 오류는 400, 나머지는 500
+    const isValidationError = message.includes('0보다 커야') || message.includes('사이여야')
     return NextResponse.json(
       { detail: `계산 오류: ${message}` },
-      { status: 500 },
+      { status: isValidationError ? 400 : 500 },
     )
   }
 }

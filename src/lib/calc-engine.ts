@@ -59,6 +59,14 @@ function _rebarArea(dia: number): number {
 }
 
 export function calculateWall(params: Record<string, any>): Record<string, any> {
+  // --- 입력값 사전 검증 ---
+  const _H = params['H'];
+  const _B = params['B'];
+  const _phi = params['phi_deg'];
+  if (!_H || _H <= 0) throw new Error(`옹벽 총 높이(H)는 0보다 커야 합니다. (입력값: ${_H})`);
+  if (!_B || _B <= 0) throw new Error(`기초 총 폭(B)은 0보다 커야 합니다. (입력값: ${_B})`);
+  if (!_phi || _phi <= 0 || _phi >= 90) throw new Error(`내부마찰각(phi)은 0~90° 사이여야 합니다. (입력값: ${_phi})`);
+
   // --- 옹벽 형식 ---
   const wall_type = params['wall_type'] ?? 'L형';
   const is_gravity = (wall_type === '중력식');
@@ -267,7 +275,7 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
       if (taper > 0 && C8_heel > 0) {
         A_S5 = 0.5 * taper * C8_heel;
         x_S5 = C6_toe + C8_heel * 2 / 3;
-        y_S5 = (D_slab + D_slab + D_slab_end) / 3;
+        y_S5 = (D_slab + D_slab_end) > 0 ? D_slab_end + (D_slab - D_slab_end) / 3 * (D_slab + 2 * D_slab_end) / (D_slab + D_slab_end) : D_slab / 3;
       } else {
         A_S5 = 0.0; x_S5 = 0.0; y_S5 = 0.0;
       }
@@ -298,7 +306,7 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
       if (taper > 0 && C8_heel > 0) {
         A_S5 = 0.5 * taper * C8_heel;
         x_S5 = C6_toe + C8_heel * 2 / 3;
-        y_S5 = (D_slab + D_slab + D_slab_end) / 3;
+        y_S5 = (D_slab + D_slab_end) > 0 ? D_slab_end + (D_slab - D_slab_end) / 3 * (D_slab + 2 * D_slab_end) / (D_slab + D_slab_end) : D_slab / 3;
       } else {
         A_S5 = 0.0; x_S5 = 0.0; y_S5 = 0.0;
       }
@@ -393,7 +401,8 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   const Mr_pa_v = Pa_v * C6_toe;
 
   // M-O 토압계수 (안정검토, delta=0)
-  const theta_rad = Math.atan(Kh / (1 - 0));
+  const Kv = 0.0;  // 수직지진가속도계수
+  const theta_rad = Math.atan(Kh / ((1 - Kv) || 0.001));
   const beta_rad = 0.0;
   const delta_stab = 0.0;
 
@@ -528,12 +537,17 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   const key_depth = params['key_depth'] ?? 0.0;
   const key_width = params['key_width'] ?? 0.0;
   let Pp_key = 0.0;
+  let W_key = 0.0;
+  let M_key = 0.0;
   if (key_enabled && key_depth > 0) {
     const gamma_front = params['gamma_t'] ?? 19.0;
     const h_top = Df + D_slab;
     const h_bot = h_top + key_depth;
     Pp_key = 0.5 * Kp * gamma_front * (h_bot ** 2 - h_top ** 2);
-    const W_key = gamma_c * key_width * key_depth;
+    W_key = gamma_c * key_width * key_depth;
+    // 전단키 자중 모멘트 (기초 좌단 기준)
+    const x_key = C6_toe + key_width / 2;  // 전단키 중심 x좌표
+    M_key = W_key * x_key;
   }
 
   const Hr_n = c_soil * B + SVn * mu + Pp + Pp_key;

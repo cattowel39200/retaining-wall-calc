@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import type { WallFormFields, WallType } from '@/types/wall'
+import type { WallFormFields, WallType, NumField } from '@/types/wall'
 import { getDefaultFormFields } from '@/types/wall'
 import SectionDiagram from './section-diagram'
 
@@ -31,10 +31,10 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
   }
 
   // computed display values
-  const t_stem = f.stem_top
-  const H = f.H_stem + f.D_slab
-  const B = f.C6_toe + t_stem + f.batter + f.batter_back + f.C8_heel
-  const Hs_soil = f.H_stem - f.Hs_gap
+  const t_stem = f.stem_top ?? 0
+  const H = (f.H_stem ?? 0) + (f.D_slab ?? 0)
+  const B = (f.C6_toe ?? 0) + t_stem + (f.batter ?? 0) + (f.batter_back ?? 0) + (f.C8_heel ?? 0)
+  const Hs_soil = (f.H_stem ?? 0) - (f.Hs_gap ?? 0)
 
   return (
     <div className="space-y-1 text-sm">
@@ -235,18 +235,18 @@ function Num({
   onChange,
 }: {
   label: string
-  value: number
+  value: NumField
   step?: number
-  onChange: (v: number) => void
+  onChange: (v: NumField) => void
 }) {
   return (
     <label className="flex flex-col gap-0.5">
       <span className="text-xs text-gray-500 truncate">{label}</span>
       <input
         type="number"
-        value={value}
+        value={value ?? ''}
         step={step}
-        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        onChange={(e) => onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
         className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
       />
     </label>

@@ -348,7 +348,13 @@ function interpolateDuration(t_min, rp) {
       return Math.exp(Math.log(I1) + (Math.log(I2) - Math.log(I1)) * logRatio);
     }
   }
-  return 0;
+  // 보간 범위 밖: 최대 지속시간의 값으로 외삽 (log-log)
+  const lastDur = durations[durations.length - 1];
+  const lastI = getActiveIdfTable()[lastDur]?.[rp];
+  if (lastI && t_min > lastDur) {
+    return lastI * Math.pow(lastDur / t_min, 0.5); // 보수적 외삽
+  }
+  return lastI || 0;
 }
 
 // Kerby 유입시간
@@ -385,7 +391,9 @@ function calcCircularPipe(D_mm, n, slope_pct, fillRatio) {
   // 부분류: h = fr * D
   const h = fr * D;
   const r = D / 2;
-  const theta = 2 * Math.acos((r - h) / r); // 중심각 (rad)
+  // acos 입력값을 [-1, 1] 범위로 클램핑 (h > r 또는 h < 0 방지)
+  const cosArg = Math.max(-1, Math.min(1, (r - h) / r));
+  const theta = 2 * Math.acos(cosArg); // 중심각 (rad)
   const A = (r * r / 2) * (theta - Math.sin(theta));
   const P = r * theta;
   const R = P > 0 ? A / P : 0;
@@ -732,11 +740,11 @@ const PIPE_MATERIALS = {
 let state = {
   activeTab: 'input',
   project: {
-    name: '우수관로 수리계산서',
-    location: '김해',
-    company: '주식회사 경성엔지니어링',
-    designer: '안세종',
-    date: '2025-02-20',
+    name: '',
+    location: '',
+    company: '',
+    designer: '',
+    date: '',
     designFrequency: 50,
     remarks: ''
   },
@@ -905,6 +913,8 @@ function computeSegment(seg, designFreq) {
 
   if (pipeResult) {
     result.section = pipeResult;
+  } else if (_comSlope <= 0) {
+    result.warning = '경사(I)가 0 이하입니다. 관거 표고를 확인하세요.';
   }
 
   // 3. 유하시간
