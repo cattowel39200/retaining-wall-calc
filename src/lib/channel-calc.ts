@@ -202,13 +202,20 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     q_live = params.live_load_manual
   }
 
+  // --- 좌/우 토피고 산정 ---
+  // 저판 수평, 벽체 상단이 다른 경우:
+  // Df는 높은 쪽 벽체 기준 토피고
+  // 낮은 쪽 벽체는 (H_max - H_low) 만큼 토피가 추가됨
+  const Df_left = Df + (H_max - H_left)    // 좌측 실제 토피고
+  const Df_right = Df + (H_max - H_right)  // 우측 실제 토피고
+
   // --- Earth pressure per wall ---
-  // Left wall
-  const q_top_L = Ka * (gamma_t * Df + q + q_live)
-  const q_bot_L = Ka * (gamma_t * (Df + H_left) + q + q_live)
-  // Right wall
-  const q_top_R = Ka * (gamma_t * Df + q + q_live)
-  const q_bot_R = Ka * (gamma_t * (Df + H_right) + q + q_live)
+  // Left wall (좌측 토피 Df_left 적용)
+  const q_top_L = Ka * (gamma_t * Df_left + q + q_live)
+  const q_bot_L = Ka * (gamma_t * (Df_left + H_left) + q + q_live)
+  // Right wall (우측 토피 Df_right 적용)
+  const q_top_R = Ka * (gamma_t * Df_right + q + q_live)
+  const q_bot_R = Ka * (gamma_t * (Df_right + H_right) + q + q_live)
 
   // --- Water pressure ---
   const hw_in_eff = Math.min(params.hw_in, H_max)
@@ -234,9 +241,9 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
   const W_right = gamma_c * ((tw_top_right + tw_bot_right) / 2) * H_right
   // Slab
   const W_slab = gamma_c * ts * B_total
-  // Soil on top of walls (overburden on wall tops)
-  const W_soil_left = gamma_t * Df * tw_top_left
-  const W_soil_right = gamma_t * Df * tw_top_right
+  // Soil on top of walls (overburden — 각 벽체별 실제 토피고 적용)
+  const W_soil_left = gamma_t * Df_left * tw_top_left
+  const W_soil_right = gamma_t * Df_right * tw_top_right
   // Internal water weight on slab
   const W_water = gamma_w * hw_in_eff * B
   // Surcharge on top of walls
@@ -491,11 +498,12 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
   return {
     geometry: {
       H_left, H_right, H_max, B, ts, haunch, Df,
+      Df_left, Df_right,
       tw_top_left, tw_bot_left, tw_top_right, tw_bot_right,
       B_total,
     },
     loads: {
-      Ka, q_live,
+      Ka, q_live, Df_left, Df_right,
       q_top_L, q_bot_L, q_top_R, q_bot_R,
       pw_left_out, pw_left_in, pw_right_out, pw_right_in,
       w_net_slab,
