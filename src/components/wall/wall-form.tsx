@@ -151,15 +151,8 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
       {/* 철근 배근 */}
       {(!isGravity || f.semi_gravity) && (
         <Section title="철근 배근">
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-            <RebarSelect label="B-B(Heel) 직경" value={f.rebar1_dia}
-              onChange={(v) => set({ rebar1_dia: v })} />
-            <Num label="B-B 간격 (mm)" value={f.rebar1_spacing} step={25}
-              onChange={(v) => set({ rebar1_spacing: v })} />
-            <RebarSelect label="C-C(벽체하부) 직경" value={f.rebar2_dia}
-              onChange={(v) => set({ rebar2_dia: v })} />
-            <Num label="C-C 간격 (mm)" value={f.rebar2_spacing} step={25}
-              onChange={(v) => set({ rebar2_spacing: v })} />
+          <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+            철근 배근은 계산 결과에서 자동 선정됩니다
           </div>
         </Section>
       )}

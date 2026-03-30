@@ -1,4 +1,5 @@
 import type { ChannelInput } from '@/types/channel'
+import { autoSelectRebar } from '@/lib/auto-rebar'
 
 // ===== Rebar area lookup =====
 function _rebarArea(dia: number): number {
@@ -430,6 +431,8 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     params.wall_left_in_dia, _rebarArea(params.wall_left_in_dia), params.wall_left_in_spacing,
     fck, fy, '좌측벽 내측',
   )
+  const auto_left_in = autoSelectRebar(Mu_left_u, Vu_left_u, tw_left_mm, params.Dc_wall, fck, fy)
+
   // Left wall outer
   const sec_left_out = sectionCheck(
     Mu_left_u * 0.5, Mcr_left, Vu_left_u * 0.5,
@@ -437,6 +440,8 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     params.wall_left_out_dia, _rebarArea(params.wall_left_out_dia), params.wall_left_out_spacing,
     fck, fy, '좌측벽 외측',
   )
+  const auto_left_out = autoSelectRebar(Mu_left_u * 0.5, Vu_left_u * 0.5, tw_left_mm, params.Dc_wall, fck, fy)
+
   // Right wall inner
   const sec_right_in = sectionCheck(
     Mu_right_u, Mcr_right, Vu_right_u,
@@ -444,6 +449,8 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     params.wall_right_in_dia, _rebarArea(params.wall_right_in_dia), params.wall_right_in_spacing,
     fck, fy, '우측벽 내측',
   )
+  const auto_right_in = autoSelectRebar(Mu_right_u, Vu_right_u, tw_right_mm, params.Dc_wall, fck, fy)
+
   // Right wall outer
   const sec_right_out = sectionCheck(
     Mu_right_u * 0.5, Mcr_right, Vu_right_u * 0.5,
@@ -451,6 +458,8 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     params.wall_right_out_dia, _rebarArea(params.wall_right_out_dia), params.wall_right_out_spacing,
     fck, fy, '우측벽 외측',
   )
+  const auto_right_out = autoSelectRebar(Mu_right_u * 0.5, Vu_right_u * 0.5, tw_right_mm, params.Dc_wall, fck, fy)
+
   // Slab end (top face tension)
   const sec_slab_end = sectionCheck(
     Mu_slab_end_u, Mcr_slab, Vu_slab_u,
@@ -458,6 +467,8 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     params.slab_top_dia, _rebarArea(params.slab_top_dia), params.slab_top_spacing,
     fck, fy, '저판 단부 (상면)',
   )
+  const auto_slab_end = autoSelectRebar(Mu_slab_end_u, Vu_slab_u, ts_mm, params.Dc_slab, fck, fy)
+
   // Slab mid (bottom face tension)
   const sec_slab_mid = sectionCheck(
     Mu_slab_mid_u, Mcr_slab, Vu_slab_u * 0.5,
@@ -465,6 +476,7 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     params.slab_bot_dia, _rebarArea(params.slab_bot_dia), params.slab_bot_spacing,
     fck, fy, '저판 중앙 (하면)',
   )
+  const auto_slab_mid = autoSelectRebar(Mu_slab_mid_u, Vu_slab_u * 0.5, ts_mm, params.Dc_slab, fck, fy)
 
   // ===== Judgment =====
   const left_ok = sec_left_in.flexure_ok && sec_left_in.shear_ok && sec_left_in.crack_ok
@@ -502,12 +514,12 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
       W_soil_left, W_soil_right, W_water,
     },
     member: {
-      left_in: sec_left_in,
-      left_out: sec_left_out,
-      right_in: sec_right_in,
-      right_out: sec_right_out,
-      slab_end: sec_slab_end,
-      slab_mid: sec_slab_mid,
+      left_in: { ...sec_left_in, auto: auto_left_in },
+      left_out: { ...sec_left_out, auto: auto_left_out },
+      right_in: { ...sec_right_in, auto: auto_right_in },
+      right_out: { ...sec_right_out, auto: auto_right_out },
+      slab_end: { ...sec_slab_end, auto: auto_slab_end },
+      slab_mid: { ...sec_slab_mid, auto: auto_slab_mid },
     },
     judgment: {
       all_ok,

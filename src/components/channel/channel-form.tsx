@@ -153,33 +153,10 @@ export default function ChannelForm({ fields, onChange }: Props) {
         </div>
       </Section>
 
-      {/* 배근 — 좌측벽 */}
-      <Section title="배근 — 좌측벽">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <RebarSelect label="내측 직경" value={f.wall_left_in_dia} onChange={v => set({ wall_left_in_dia: v })} />
-          <Num label="내측 간격 (mm)" value={f.wall_left_in_spacing} step={25} onChange={v => set({ wall_left_in_spacing: v })} />
-          <RebarSelect label="외측 직경" value={f.wall_left_out_dia} onChange={v => set({ wall_left_out_dia: v })} />
-          <Num label="외측 간격 (mm)" value={f.wall_left_out_spacing} step={25} onChange={v => set({ wall_left_out_spacing: v })} />
-        </div>
-      </Section>
-
-      {/* 배근 — 우측벽 */}
-      <Section title="배근 — 우측벽">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <RebarSelect label="내측 직경" value={f.wall_right_in_dia} onChange={v => set({ wall_right_in_dia: v })} />
-          <Num label="내측 간격 (mm)" value={f.wall_right_in_spacing} step={25} onChange={v => set({ wall_right_in_spacing: v })} />
-          <RebarSelect label="외측 직경" value={f.wall_right_out_dia} onChange={v => set({ wall_right_out_dia: v })} />
-          <Num label="외측 간격 (mm)" value={f.wall_right_out_spacing} step={25} onChange={v => set({ wall_right_out_spacing: v })} />
-        </div>
-      </Section>
-
-      {/* 배근 — 저판 */}
-      <Section title="배근 — 저판">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <RebarSelect label="상면 직경" value={f.slab_top_dia} onChange={v => set({ slab_top_dia: v })} />
-          <Num label="상면 간격 (mm)" value={f.slab_top_spacing} step={25} onChange={v => set({ slab_top_spacing: v })} />
-          <RebarSelect label="하면 직경" value={f.slab_bot_dia} onChange={v => set({ slab_bot_dia: v })} />
-          <Num label="하면 간격 (mm)" value={f.slab_bot_spacing} step={25} onChange={v => set({ slab_bot_spacing: v })} />
+      {/* 배근 — 자동 선정 안내 */}
+      <Section title="철근 배근">
+        <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+          철근 배근은 계산 결과에서 자동 선정됩니다
         </div>
       </Section>
     </div>

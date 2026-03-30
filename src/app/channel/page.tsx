@@ -228,6 +228,19 @@ export default function ChannelPage() {
                         <div className="mt-2 text-xs text-gray-500">
                           As={f2(m.As)} mm²/m · ρ={f3(m.rho)} · D{m.rebar_dia}@{m.rebar_spacing}
                         </div>
+
+                        {/* 자동 배근 결과 */}
+                        {m.auto && (
+                          <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-3">
+                            <div className="text-xs font-semibold text-blue-700 mb-2">자동 배근 선정 결과</div>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-gray-700">
+                              <div>주철근: D{m.auto.main_dia}@{m.auto.main_spacing} (As={m.auto.main_As?.toFixed(1)} mm²/m)</div>
+                              <div>배력근: D{m.auto.dist_dia}@{m.auto.dist_spacing} (As={m.auto.dist_As?.toFixed(1)} mm²/m)</div>
+                              <div>스터럽: {m.auto.stirrup_reason}</div>
+                              <div>정착길이: {m.auto.ld} mm / 이음길이: {m.auto.ls} mm</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
