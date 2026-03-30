@@ -1,6 +1,6 @@
 'use client'
 import type { ChannelFormFields, NumField } from '@/types/channel'
-import { SOIL_PRESETS, CONCRETE_PRESETS, REBAR_GRADE_PRESETS, COVER_PRESETS, REBAR_DIAS } from '@/lib/presets'
+import { SOIL_PRESETS, DESIGN_PRESETS, REBAR_DIAS } from '@/lib/presets'
 
 interface Props {
   fields: ChannelFormFields
@@ -93,8 +93,6 @@ export default function ChannelForm({ fields, onChange }: Props) {
       {/* 하중 */}
       <Section title="하중">
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <Num label="상재하중 q (kN/m²)" value={f.q} step={1} onChange={v => set({ q: v })} />
-          <Num label="콘크리트 γc (kN/m³)" value={f.gamma_c} step={0.5} onChange={v => set({ gamma_c: v })} />
           <label className="flex flex-col gap-0.5 col-span-2">
             <span className="text-xs text-gray-500">활하중</span>
             <select value={f.live_load} onChange={e => set({ live_load: e.target.value as any })}
@@ -111,52 +109,32 @@ export default function ChannelForm({ fields, onChange }: Props) {
         </div>
       </Section>
 
-      {/* 재료 / 피복 */}
-      <Section title="재료 / 피복">
+      {/* 설계조건 */}
+      <Section title="설계조건" defaultOpen>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          {/* 콘크리트 등급 프리셋 */}
           <label className="flex flex-col gap-0.5 col-span-2">
-            <span className="text-xs text-gray-500">콘크리트 등급</span>
+            <span className="text-xs text-gray-500">설계조건 프리셋</span>
             <select onChange={e => {
-              const p = CONCRETE_PRESETS[parseInt(e.target.value)]
-              if (p && p.fck > 0) set({ fck: p.fck, gamma_c: p.gamma_c })
+              const p = DESIGN_PRESETS[parseInt(e.target.value)]
+              if (p) set({ fck: p.fck, fy: p.fy, gamma_c: p.gamma_c, Dc_wall: p.Dc_wall, Dc_slab: p.Dc_slab, q: p.q })
             }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
-              {CONCRETE_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
+              {DESIGN_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
             </select>
           </label>
+          <p className="col-span-2 text-xs text-gray-400 -mt-1">프리셋 선택 시 아래 값이 자동 반영됩니다</p>
           <Num label="fck (MPa)" value={f.fck} step={3} onChange={v => set({ fck: v })} />
           <Num label="fy (MPa)" value={f.fy} step={100} onChange={v => set({ fy: v })} />
-
-          {/* 철근 등급 프리셋 */}
-          <label className="flex flex-col gap-0.5 col-span-2">
-            <span className="text-xs text-gray-500">철근 등급</span>
-            <select onChange={e => {
-              const p = REBAR_GRADE_PRESETS[parseInt(e.target.value)]
-              if (p) set({ fy: p.fy })
-            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
-              {REBAR_GRADE_PRESETS.map((p, i) => <option key={i} value={i}>{p.label} ({p.fy} MPa)</option>)}
-            </select>
-          </label>
-
-          {/* 피복 프리셋 */}
-          <label className="flex flex-col gap-0.5 col-span-2">
-            <span className="text-xs text-gray-500">피복두께 기준</span>
-            <select onChange={e => {
-              const p = COVER_PRESETS[parseInt(e.target.value)]
-              if (p && p.Dc_wall > 0) set({ Dc_wall: p.Dc_wall, Dc_slab: p.Dc_slab })
-            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
-              {COVER_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}{p.desc ? ` — ${p.desc}` : ''}</option>)}
-            </select>
-          </label>
+          <Num label="콘크리트 γc (kN/m³)" value={f.gamma_c} step={0.5} onChange={v => set({ gamma_c: v })} />
+          <Num label="상재하중 q (kN/m²)" value={f.q} step={1} onChange={v => set({ q: v })} />
           <Num label="벽체 피복 (mm)" value={f.Dc_wall} step={10} onChange={v => set({ Dc_wall: v })} />
           <Num label="저판 피복 (mm)" value={f.Dc_slab} step={10} onChange={v => set({ Dc_slab: v })} />
         </div>
       </Section>
 
-      {/* 배근 — 자동 선정 안내 */}
-      <Section title="철근 배근">
+      {/* 철근 배근 (자동) */}
+      <Section title="철근 배근 (자동)">
         <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded px-3 py-2">
-          철근 배근은 계산 결과에서 자동 선정됩니다
+          철근 배근은 설계기준에 따라 자동 선정됩니다
         </div>
       </Section>
     </div>

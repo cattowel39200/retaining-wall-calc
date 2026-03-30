@@ -104,3 +104,65 @@ export const SEISMIC_PRESETS: SeismicPreset[] = [
 
 // ===== 표준 철근 직경 =====
 export const REBAR_DIAS = [10, 13, 16, 19, 22, 25, 29, 32]
+
+// ===== 통합 설계조건 프리셋 =====
+// 지반을 제외한 모든 설계값을 한번에 세팅
+export interface DesignPreset {
+  label: string
+  fck: number          // 콘크리트 강도 (MPa)
+  fy: number           // 철근 강도 (MPa)
+  gamma_c: number      // 콘크리트 단위중량 (kN/m³)
+  Dc_wall: number      // 벽체 피복 (mm)
+  Dc_slab: number      // 저판 피복 (mm)
+  q: number            // 상재하중 (kN/m²)
+  Kh: number           // 내진계수
+  desc: string
+}
+
+// KDS 14 20 40 (내구성 설계) 기준 최소 콘크리트 강도
+// - 일반환경(보통): fck ≥ 21 MPa
+// - 동결융해/탄산화: fck ≥ 27 MPa
+// - 염해환경(해안): fck ≥ 30 MPa
+// - 화학적 침식: fck ≥ 30 MPa
+// KDS 14 20 50 (수밀 콘크리트): fck ≥ 30 MPa
+// KDS 24 14 21 (도로교): fck ≥ 27 MPa
+// KDS 14 20 10: 철근콘크리트 최소 fck ≥ 21 MPa
+
+export const DESIGN_PRESETS: DesignPreset[] = [
+  {
+    label: '일반 구조물 (표준)',
+    fck: 24, fy: 400, gamma_c: 24.5, Dc_wall: 80, Dc_slab: 80,
+    q: 10, Kh: 0.077,
+    desc: 'KDS 일반환경, fck24, SD400, 피복80, q=10'
+  },
+  {
+    label: '도로 횡단 구조물',
+    fck: 27, fy: 400, gamma_c: 24.5, Dc_wall: 80, Dc_slab: 80,
+    q: 15, Kh: 0.077,
+    desc: 'KDS 24 14 21, fck≥27, SD400, q=15(차량)'
+  },
+  {
+    label: '수밀 구조물 (지하/수로)',
+    fck: 30, fy: 400, gamma_c: 24.5, Dc_wall: 80, Dc_slab: 80,
+    q: 10, Kh: 0.077,
+    desc: 'KDS 14 20 50, fck≥30(수밀), SD400'
+  },
+  {
+    label: '소규모 구조물 (H<3m)',
+    fck: 21, fy: 400, gamma_c: 24.5, Dc_wall: 70, Dc_slab: 70,
+    q: 10, Kh: 0.05,
+    desc: 'KDS 최소 fck≥21, SD400, 피복70'
+  },
+  {
+    label: '내진 I등급 구조물',
+    fck: 27, fy: 400, gamma_c: 24.5, Dc_wall: 80, Dc_slab: 80,
+    q: 10, Kh: 0.154,
+    desc: 'KDS 17 10 00, fck≥27, Kh=0.154g'
+  },
+  {
+    label: '해안/동결 환경 구조물',
+    fck: 30, fy: 400, gamma_c: 24.5, Dc_wall: 100, Dc_slab: 100,
+    q: 10, Kh: 0.077,
+    desc: 'KDS 14 20 40, fck≥30(염해/동결), 피복100'
+  },
+]
