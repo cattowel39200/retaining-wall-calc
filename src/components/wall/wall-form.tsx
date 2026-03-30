@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import type { WallFormFields, WallType, NumField } from '@/types/wall'
 import { getDefaultFormFields } from '@/types/wall'
+import { SOIL_PRESETS, CONCRETE_PRESETS, REBAR_GRADE_PRESETS, COVER_PRESETS, SURCHARGE_PRESETS, SEISMIC_PRESETS, REBAR_DIAS } from '@/lib/presets'
 import SectionDiagram from './section-diagram'
 
 interface WallFormProps {
@@ -11,7 +12,6 @@ interface WallFormProps {
 }
 
 const WALL_TYPES: WallType[] = ['L형', '역L형', '역T형', '중력식']
-const REBAR_DIAS = [10, 13, 16, 19, 22, 25, 29, 32]
 
 export default function WallForm({ fields, onChange }: WallFormProps) {
   const f = fields
@@ -122,6 +122,15 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
       {/* 지반 / 하중 */}
       <Section title="지반 / 하중" defaultOpen>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <label className="flex flex-col gap-0.5 col-span-2">
+            <span className="text-xs text-gray-500">지반 프리셋</span>
+            <select onChange={e => {
+              const p = SOIL_PRESETS[parseInt(e.target.value)]
+              if (p && p.gamma_t > 0) set({ gamma_t: p.gamma_t, phi_deg: p.phi_deg, c_soil: p.c_soil, gamma_sat: p.gamma_sat })
+            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
+              {SOIL_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}{p.desc ? ` (${p.desc})` : ''}</option>)}
+            </select>
+          </label>
           <Num label="단위중량 gamma_t (kN/m3)" value={f.gamma_t} step={0.5}
             onChange={(v) => set({ gamma_t: v })} />
           <Num label="내부마찰각 phi (deg)" value={f.phi_deg} step={1}
@@ -158,6 +167,15 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
       {/* 내진설계 */}
       <Section title="내진설계">
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <label className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-500">내진등급</span>
+            <select onChange={e => {
+              const p = SEISMIC_PRESETS[parseInt(e.target.value)]
+              if (p && p.Kh > 0) set({ Kh: p.Kh })
+            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
+              {SEISMIC_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
+            </select>
+          </label>
           <Num label="수평가속도계수 Kh" value={f.Kh} step={0.001}
             onChange={(v) => set({ Kh: v })} />
         </div>
@@ -166,12 +184,39 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
       {/* 재료 / 피복 */}
       <Section title="재료 / 피복">
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <label className="flex flex-col gap-0.5 col-span-2">
+            <span className="text-xs text-gray-500">콘크리트 등급</span>
+            <select onChange={e => {
+              const p = CONCRETE_PRESETS[parseInt(e.target.value)]
+              if (p && p.fck > 0) set({ fck: p.fck, gamma_c: p.gamma_c })
+            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
+              {CONCRETE_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
+            </select>
+          </label>
           <Num label="fck (MPa)" value={f.fck} step={3}
             onChange={(v) => set({ fck: v })} />
+          <label className="flex flex-col gap-0.5 col-span-2">
+            <span className="text-xs text-gray-500">철근 등급</span>
+            <select onChange={e => {
+              const p = REBAR_GRADE_PRESETS[parseInt(e.target.value)]
+              if (p) set({ fy: p.fy })
+            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
+              {REBAR_GRADE_PRESETS.map((p, i) => <option key={i} value={i}>{p.label} ({p.fy} MPa)</option>)}
+            </select>
+          </label>
           <Num label="fy (MPa)" value={f.fy} step={100}
             onChange={(v) => set({ fy: v })} />
           {(!isGravity || f.semi_gravity) && (
             <>
+              <label className="flex flex-col gap-0.5 col-span-2">
+                <span className="text-xs text-gray-500">피복두께 기준</span>
+                <select onChange={e => {
+                  const p = COVER_PRESETS[parseInt(e.target.value)]
+                  if (p && p.Dc_wall > 0) set({ Dc_slab: p.Dc_slab, Dc_wall: p.Dc_wall })
+                }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
+                  {COVER_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}{p.desc ? ` — ${p.desc}` : ''}</option>)}
+                </select>
+              </label>
               <Num label="저판 피복 Dc_slab (mm)" value={f.Dc_slab} step={10}
                 onChange={(v) => set({ Dc_slab: v })} />
               <Num label="벽체 피복 Dc_wall (mm)" value={f.Dc_wall} step={10}
