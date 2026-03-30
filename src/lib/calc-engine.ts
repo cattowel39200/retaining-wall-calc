@@ -115,14 +115,14 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   const gwl_height = params['gwl_height'] ?? 0.0;
 
   const rebar1_dia = params['rebar1_dia'] ?? 13;
-  const rebar1_spacing = params['rebar1_spacing'] || 125;
+  const rebar1_spacing = params['rebar1_spacing'] ?? 125;
   const rebar2_dia = params['rebar2_dia'] ?? 13;
-  const rebar2_spacing = params['rebar2_spacing'] || 250;
+  const rebar2_spacing = params['rebar2_spacing'] ?? 250;
   const rebar3_dia = params['rebar3_dia'] ?? rebar1_dia;
-  const rebar3_spacing = params['rebar3_spacing'] || rebar1_spacing;
+  const rebar3_spacing = params['rebar3_spacing'] ?? rebar1_spacing;
 
   const rebar_toe_dia = params['rebar_toe_dia'] ?? rebar1_dia;
-  const rebar_toe_spacing = params['rebar_toe_spacing'] || rebar1_spacing;
+  const rebar_toe_spacing = params['rebar_toe_spacing'] ?? rebar1_spacing;
 
   const rebar1_area = _rebarArea(rebar1_dia);
   const rebar2_area = _rebarArea(rebar2_dia);
