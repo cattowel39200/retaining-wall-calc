@@ -14,12 +14,28 @@ export default function ChannelForm({ fields, onChange }: Props) {
 
   return (
     <div className="space-y-1 text-sm">
-      {/* 단면 치수 */}
-      <Section title="단면 치수" defaultOpen>
+      {/* 좌측 벽체 */}
+      <Section title="좌측 벽체" defaultOpen>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <Num label="H 벽체 높이 (m)" value={f.H} step={0.1} onChange={v => set({ H: v })} />
+          <Num label="H_left 높이 (m)" value={f.H_left} step={0.1} onChange={v => set({ H_left: v })} />
+          <Num label="tw_top 상단두께 (m)" value={f.tw_top_left} step={0.05} onChange={v => set({ tw_top_left: v })} />
+          <Num label="tw_bot 하단두께 (m)" value={f.tw_bot_left} step={0.05} onChange={v => set({ tw_bot_left: v })} />
+        </div>
+      </Section>
+
+      {/* 우측 벽체 */}
+      <Section title="우측 벽체" defaultOpen>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="H_right 높이 (m)" value={f.H_right} step={0.1} onChange={v => set({ H_right: v })} />
+          <Num label="tw_top 상단두께 (m)" value={f.tw_top_right} step={0.05} onChange={v => set({ tw_top_right: v })} />
+          <Num label="tw_bot 하단두께 (m)" value={f.tw_bot_right} step={0.05} onChange={v => set({ tw_bot_right: v })} />
+        </div>
+      </Section>
+
+      {/* 저판 */}
+      <Section title="저판">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
           <Num label="B 내폭 (m)" value={f.B} step={0.1} onChange={v => set({ B: v })} />
-          <Num label="tw 벽체 두께 (m)" value={f.tw} step={0.05} onChange={v => set({ tw: v })} />
           <Num label="ts 저판 두께 (m)" value={f.ts} step={0.05} onChange={v => set({ ts: v })} />
           <Num label="헌치 크기 (m)" value={f.haunch} step={0.05} onChange={v => set({ haunch: v })} />
         </div>
@@ -34,7 +50,7 @@ export default function ChannelForm({ fields, onChange }: Props) {
           <Num label="점착력 c (kPa)" value={f.c_soil} step={1} onChange={v => set({ c_soil: v })} />
           <label className="flex flex-col gap-0.5 col-span-2">
             <span className="text-xs text-gray-500">토압계수 산정</span>
-            <select value={f.K0_mode} onChange={e => set({ K0_mode: e.target.value as 'rankine'|'manual' })}
+            <select value={f.K0_mode} onChange={e => set({ K0_mode: e.target.value as 'rankine' | 'manual' })}
               className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white">
               <option value="rankine">Rankine (Ka)</option>
               <option value="manual">직접 입력</option>
@@ -43,6 +59,18 @@ export default function ChannelForm({ fields, onChange }: Props) {
           {f.K0_mode === 'manual' && (
             <Num label="토압계수 K" value={f.K0_manual} step={0.01} onChange={v => set({ K0_manual: v })} />
           )}
+        </div>
+      </Section>
+
+      {/* 지지력 옵션 */}
+      <Section title="지지력 옵션">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <Num label="φ₂ 기초지반 (°)" value={f.phi2_deg} step={1} onChange={v => set({ phi2_deg: v })} />
+          <Num label="γ_found (kN/m³)" value={f.gamma_found} step={0.5} onChange={v => set({ gamma_found: v })} />
+          <div className="col-span-2">
+            <Num label="qa 고정값 (kN/m²)" value={f.qa_fixed} step={10} onChange={v => set({ qa_fixed: v })} />
+            <span className="text-xs text-gray-400">0이면 Terzaghi 자동</span>
+          </div>
         </div>
       </Section>
 
@@ -85,13 +113,23 @@ export default function ChannelForm({ fields, onChange }: Props) {
         </div>
       </Section>
 
-      {/* 배근 — 측벽 */}
-      <Section title="배근 — 측벽">
+      {/* 배근 — 좌측벽 */}
+      <Section title="배근 — 좌측벽">
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <RebarSelect label="내측 직경" value={f.wall_in_dia} onChange={v => set({ wall_in_dia: v })} />
-          <Num label="내측 간격 (mm)" value={f.wall_in_spacing} step={25} onChange={v => set({ wall_in_spacing: v })} />
-          <RebarSelect label="외측 직경" value={f.wall_out_dia} onChange={v => set({ wall_out_dia: v })} />
-          <Num label="외측 간격 (mm)" value={f.wall_out_spacing} step={25} onChange={v => set({ wall_out_spacing: v })} />
+          <RebarSelect label="내측 직경" value={f.wall_left_in_dia} onChange={v => set({ wall_left_in_dia: v })} />
+          <Num label="내측 간격 (mm)" value={f.wall_left_in_spacing} step={25} onChange={v => set({ wall_left_in_spacing: v })} />
+          <RebarSelect label="외측 직경" value={f.wall_left_out_dia} onChange={v => set({ wall_left_out_dia: v })} />
+          <Num label="외측 간격 (mm)" value={f.wall_left_out_spacing} step={25} onChange={v => set({ wall_left_out_spacing: v })} />
+        </div>
+      </Section>
+
+      {/* 배근 — 우측벽 */}
+      <Section title="배근 — 우측벽">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          <RebarSelect label="내측 직경" value={f.wall_right_in_dia} onChange={v => set({ wall_right_in_dia: v })} />
+          <Num label="내측 간격 (mm)" value={f.wall_right_in_spacing} step={25} onChange={v => set({ wall_right_in_spacing: v })} />
+          <RebarSelect label="외측 직경" value={f.wall_right_out_dia} onChange={v => set({ wall_right_out_dia: v })} />
+          <Num label="외측 간격 (mm)" value={f.wall_right_out_spacing} step={25} onChange={v => set({ wall_right_out_spacing: v })} />
         </div>
       </Section>
 

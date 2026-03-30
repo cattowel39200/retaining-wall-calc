@@ -1,6 +1,6 @@
 import type { ChannelInput } from '@/types/channel'
 
-// ===== Rebar area lookup (reused from wall calc) =====
+// ===== Rebar area lookup =====
 function _rebarArea(dia: number): number {
   const table: Record<number, number> = {
     10: 71.3, 13: 126.7, 16: 198.6, 19: 286.5,
@@ -9,7 +9,47 @@ function _rebarArea(dia: number): number {
   return table[dia] ?? (Math.PI / 4 * dia ** 2)
 }
 
-// ===== Section Check (reused from wall calc-engine) =====
+// ===== Terzaghi Bearing Capacity Factors =====
+const TERZAGHI_TABLE: { phi: number; Nc: number; Nq: number; Nr: number }[] = [
+  { phi: 0,  Nc: 5.7,   Nq: 1.0,   Nr: 0.0   },
+  { phi: 5,  Nc: 7.3,   Nq: 1.6,   Nr: 0.5   },
+  { phi: 10, Nc: 9.6,   Nq: 2.7,   Nr: 1.2   },
+  { phi: 15, Nc: 12.9,  Nq: 4.4,   Nr: 2.5   },
+  { phi: 20, Nc: 17.7,  Nq: 7.4,   Nr: 5.0   },
+  { phi: 25, Nc: 25.1,  Nq: 12.7,  Nr: 9.7   },
+  { phi: 28, Nc: 31.6,  Nq: 17.8,  Nr: 14.6  },
+  { phi: 30, Nc: 37.2,  Nq: 22.5,  Nr: 19.7  },
+  { phi: 32, Nc: 44.0,  Nq: 28.5,  Nr: 27.0  },
+  { phi: 34, Nc: 52.6,  Nq: 36.5,  Nr: 36.0  },
+  { phi: 36, Nc: 63.5,  Nq: 47.2,  Nr: 51.0  },
+  { phi: 38, Nc: 77.5,  Nq: 61.5,  Nr: 73.0  },
+  { phi: 40, Nc: 95.7,  Nq: 81.3,  Nr: 100.4 },
+  { phi: 45, Nc: 172.3, Nq: 173.3, Nr: 297.5 },
+]
+
+function _interpTerzaghi(phi: number): { Nc: number; Nq: number; Nr: number } {
+  if (phi <= 0) return { Nc: TERZAGHI_TABLE[0].Nc, Nq: TERZAGHI_TABLE[0].Nq, Nr: TERZAGHI_TABLE[0].Nr }
+  if (phi >= 45) {
+    const last = TERZAGHI_TABLE[TERZAGHI_TABLE.length - 1]
+    return { Nc: last.Nc, Nq: last.Nq, Nr: last.Nr }
+  }
+  let lo = TERZAGHI_TABLE[0], hi = TERZAGHI_TABLE[1]
+  for (let i = 0; i < TERZAGHI_TABLE.length - 1; i++) {
+    if (phi >= TERZAGHI_TABLE[i].phi && phi <= TERZAGHI_TABLE[i + 1].phi) {
+      lo = TERZAGHI_TABLE[i]
+      hi = TERZAGHI_TABLE[i + 1]
+      break
+    }
+  }
+  const t = (phi - lo.phi) / (hi.phi - lo.phi)
+  return {
+    Nc: lo.Nc + t * (hi.Nc - lo.Nc),
+    Nq: lo.Nq + t * (hi.Nq - lo.Nq),
+    Nr: lo.Nr + t * (hi.Nr - lo.Nr),
+  }
+}
+
+// ===== Section Check (RC member design) =====
 function sectionCheck(
   Mu_val: number, Mcr_val: number, Vu_val: number,
   H_sec_mm: number, Dc_mm: number,
@@ -109,19 +149,24 @@ function sectionCheck(
 // ===== Main Calculation =====
 export function calculateChannel(params: ChannelInput): Record<string, any> {
   // --- Validation ---
-  if (params.H <= 0) throw new Error('벽체 높이(H)는 0보다 커야 합니다.')
+  if (params.H_left <= 0) throw new Error('좌측 벽체 높이(H_left)는 0보다 커야 합니다.')
+  if (params.H_right <= 0) throw new Error('우측 벽체 높이(H_right)는 0보다 커야 합니다.')
   if (params.B <= 0) throw new Error('내폭(B)은 0보다 커야 합니다.')
-  if (params.tw <= 0) throw new Error('벽체 두께(tw)는 0보다 커야 합니다.')
   if (params.ts <= 0) throw new Error('저판 두께(ts)는 0보다 커야 합니다.')
-  if (params.phi_deg <= 0 || params.phi_deg >= 90) throw new Error('내부마찰각은 0~90° 사이여야 합니다.')
+  if (params.tw_top_left <= 0 || params.tw_bot_left <= 0) throw new Error('좌측 벽체 두께는 0보다 커야 합니다.')
+  if (params.tw_top_right <= 0 || params.tw_bot_right <= 0) throw new Error('우측 벽체 두께는 0보다 커야 합니다.')
+  if (params.phi_deg < 0 || params.phi_deg > 90) throw new Error('내부마찰각은 0~90° 사이여야 합니다.')
 
-  const { H, B, tw, ts, haunch, Df, gamma_t, phi_deg, c_soil, q, gamma_c, fck, fy } = params
+  const {
+    H_left, H_right, B, ts, haunch, Df,
+    gamma_t, phi_deg, c_soil, q, gamma_c, fck, fy,
+    tw_top_left, tw_bot_left, tw_top_right, tw_bot_right,
+  } = params
   const gamma_w = 9.81
 
-  // --- Total dimensions ---
-  const H_total = H + ts                    // 전체 높이 (벽체+저판)
-  const B_total = B + 2 * tw               // 전체 폭 (내폭+벽체2개)
-  const H_earth = H + ts + Df              // 지표면~저판하면
+  // --- Geometry ---
+  const H_max = Math.max(H_left, H_right)
+  const B_total = B + tw_bot_left + tw_bot_right  // 저판 전체 폭
 
   // --- Earth pressure coefficient ---
   const phi_rad = phi_deg * Math.PI / 180
@@ -132,21 +177,19 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     Ka = Math.pow(Math.tan(Math.PI / 4 - phi_rad / 2), 2)
   }
 
-  // --- Live load (DB-24 distributed) ---
+  // --- Live load ---
   let q_live = 0
   if (params.live_load === 'DB24') {
-    // DB-24: 후륜하중 96kN, 분포폭에 따른 등분포 환산
-    // 토피에 따른 분산: 분산폭 = 바퀴접지폭 + 2×Df×tan(45°)
-    const wheel_load = 96  // kN
-    const tire_width = 0.5  // m (접지폭)
-    const spread_width = tire_width + 2 * Df * 1.0  // tan(45°)=1
+    const wheel_load = 96
+    const tire_width = 0.5
+    const spread_width = tire_width + 2 * Df * 1.0
     const spread_length = 0.2 + 2 * Df * 1.0
     q_live = spread_width > 0 && spread_length > 0
       ? wheel_load / (spread_width * spread_length)
       : 0
-    q_live = Math.min(q_live, 64)  // 상한 (토피 0일때 최대)
+    q_live = Math.min(q_live, 64)
   } else if (params.live_load === 'DB18') {
-    const wheel_load = 72  // kN
+    const wheel_load = 72
     const tire_width = 0.5
     const spread_width = tire_width + 2 * Df * 1.0
     const spread_length = 0.2 + 2 * Df * 1.0
@@ -158,128 +201,318 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     q_live = params.live_load_manual
   }
 
-  // --- External loads on side wall (per 1m width) ---
-  // Earth pressure (trapezoidal on wall height H)
-  const q_top = Ka * (gamma_t * Df + q + q_live)      // 벽체 상단 수평토압 (kN/m²)
-  const q_bot = Ka * (gamma_t * (Df + H) + q + q_live) // 벽체 하단 수평토압 (kN/m²)
+  // --- Earth pressure per wall ---
+  // Left wall
+  const q_top_L = Ka * (gamma_t * Df + q + q_live)
+  const q_bot_L = Ka * (gamma_t * (Df + H_left) + q + q_live)
+  // Right wall
+  const q_top_R = Ka * (gamma_t * Df + q + q_live)
+  const q_bot_R = Ka * (gamma_t * (Df + H_right) + q + q_live)
 
-  // Water pressure — external
-  const hw_out_eff = Math.min(params.hw_out, H)
-  const pw_out_bot = gamma_w * hw_out_eff  // 외수압 하단 (kN/m²)
+  // --- Water pressure ---
+  const hw_in_eff = Math.min(params.hw_in, H_max)
+  const hw_out_eff = Math.min(params.hw_out, H_max)
+  const pw_in_bot = gamma_w * hw_in_eff     // 내수압 하단
+  const pw_out_bot = gamma_w * hw_out_eff    // 외수압 하단
 
-  // Water pressure — internal
-  const hw_in_eff = Math.min(params.hw_in, H)
-  const pw_in_bot = gamma_w * hw_in_eff    // 내수압 하단 (kN/m²)
+  // Net water on left wall (external pushes inward, internal pushes outward)
+  const hw_left_out = Math.min(params.hw_out, H_left)
+  const hw_left_in = Math.min(params.hw_in, H_left)
+  const pw_left_out = gamma_w * hw_left_out
+  const pw_left_in = gamma_w * hw_left_in
 
-  // --- Side Wall Analysis (Fixed-free cantilever: fixed at bottom, free at top) ---
-  // Total lateral pressure = earth + external water - internal water
-  // Net pressure at top of wall
-  const w_top = q_top + 0 - 0  // 상단: 토압만 (수압은 하부에서 시작)
-  // Net pressure at bottom of wall
-  const w_bot = q_bot + pw_out_bot - pw_in_bot
+  const hw_right_out = Math.min(params.hw_out, H_right)
+  const hw_right_in = Math.min(params.hw_in, H_right)
+  const pw_right_out = gamma_w * hw_right_out
+  const pw_right_in = gamma_w * hw_right_in
 
-  // Cantilever moment at base (trapezoidal load)
-  // M = (w_top × H²/2) + ((w_bot - w_top) × H²/3)  (삼각형+직사각형 분해)
-  // 더 정확: M = H²/6 × (2×w_bot + w_top) for trapezoidal
-  const Mu_wall = (H * H / 6) * (2 * w_bot + w_top)
-  const Vu_wall = (w_top + w_bot) * H / 2
+  // ===== Self-weight (for stability) =====
+  // Left wall (trapezoid): average thickness * height * gamma_c
+  const W_left = gamma_c * ((tw_top_left + tw_bot_left) / 2) * H_left
+  // Right wall (trapezoid)
+  const W_right = gamma_c * ((tw_top_right + tw_bot_right) / 2) * H_right
+  // Slab
+  const W_slab = gamma_c * ts * B_total
+  // Soil on top of walls (overburden on wall tops)
+  const W_soil_left = gamma_t * Df * tw_top_left
+  const W_soil_right = gamma_t * Df * tw_top_right
+  // Internal water weight on slab
+  const W_water = gamma_w * hw_in_eff * B
+  // Surcharge on top of walls
+  const W_q_left = q * tw_top_left
+  const W_q_right = q * tw_top_right
 
-  // Cracking moment (approximate)
-  const tw_mm = tw * 1000
-  const Mcr_wall = (1 / 6) * (0.63 * Math.sqrt(fck)) * 1000 * tw_mm * tw_mm / 1e6
+  const W_total = W_left + W_right + W_slab + W_soil_left + W_soil_right + W_water + W_q_left + W_q_right
 
-  // --- Bottom Slab Analysis (Fixed-fixed beam, span = B) ---
-  // Vertical loads on slab:
-  const w_self = gamma_c * ts                                    // 자중 (kN/m²)
-  const w_soil = gamma_t * Df                                     // 토피하중 (kN/m²)
-  const w_water_in = gamma_w * hw_in_eff                         // 내수중량 (kN/m²)
-  const w_slab_total = w_self + w_soil + q + q_live + w_water_in  // 총 등분포 (kN/m²)
+  // ===== Moment arms about left toe (x from left edge of base slab) =====
+  // Left wall centroid: for trapezoid, centroid from left edge
+  // Left wall sits on left portion of slab (0 to tw_bot_left)
+  const x_left_wall = tw_bot_left / 2  // approximate centroid of left wall
+  const x_right_wall = tw_bot_left + B + tw_bot_right / 2
+  const x_slab = B_total / 2
+  const x_soil_left = tw_top_left / 2  // soil on top of left wall
+  const x_soil_right = tw_bot_left + B + tw_top_right / 2  // approximate
+  const x_water = tw_bot_left + B / 2  // water inside channel
+  const x_q_left = tw_top_left / 2
+  const x_q_right = tw_bot_left + B + tw_top_right / 2
 
-  // Upward: ground reaction (simplified as uniform)
-  // Net load = downward total
-  const w_net_slab = w_slab_total  // kN/m per 1m width
+  // Stabilizing vertical moment about left toe
+  const Mr_v = W_left * x_left_wall + W_right * x_right_wall + W_slab * x_slab
+    + W_soil_left * x_soil_left + W_soil_right * x_soil_right
+    + W_water * x_water + W_q_left * x_q_left + W_q_right * x_q_right
 
-  // Fixed-fixed beam: M_end = wL²/12, M_mid = wL²/24, V = wL/2
-  const Mu_slab_end = w_net_slab * B * B / 12    // 단부 모멘트 (음)
-  const Mu_slab_mid = w_net_slab * B * B / 24    // 중앙 모멘트 (양)
+  // ===== Horizontal forces =====
+  // Earth pressure on left wall (pushes rightward = positive)
+  const Pa_left = (q_top_L + q_bot_L) * H_left / 2
+  // Earth pressure on right wall (pushes leftward = negative)
+  const Pa_right = (q_top_R + q_bot_R) * H_right / 2
+
+  // External water on left wall (pushes rightward)
+  const Pw_left_ext = pw_left_out * hw_left_out / 2
+  // Internal water on left wall (pushes leftward, resisting)
+  const Pw_left_int = pw_left_in * hw_left_in / 2
+  // External water on right wall (pushes leftward)
+  const Pw_right_ext = pw_right_out * hw_right_out / 2
+  // Internal water on right wall (pushes rightward, resisting)
+  const Pw_right_int = pw_right_in * hw_right_in / 2
+
+  // Net horizontal force (positive = rightward)
+  const H_right_force = Pa_left + Pw_left_ext - Pw_left_int + Pw_right_int
+  const H_left_force = Pa_right + Pw_right_ext - Pw_right_int + Pw_left_int
+  const H_net = H_right_force - H_left_force  // positive = net rightward
+
+  // ===== Overturning moments =====
+  // Earth pressure moment arms (measured from base, triangular distribution → H/3 from base)
+  // Left wall earth pressure acts at centroid of trapezoid from base
+  const ya_left = H_left * (2 * q_bot_L + q_top_L) / (3 * (q_top_L + q_bot_L + 1e-12)) // from base
+  const ya_right = H_right * (2 * q_bot_R + q_top_R) / (3 * (q_top_R + q_bot_R + 1e-12))
+
+  // Lever arms from base slab bottom = y + ts
+  const arm_Pa_left = ya_left + ts
+  const arm_Pa_right = ya_right + ts
+  const arm_Pw_left_ext = hw_left_out / 3 + ts
+  const arm_Pw_left_int = hw_left_in / 3 + ts
+  const arm_Pw_right_ext = hw_right_out / 3 + ts
+  const arm_Pw_right_int = hw_right_in / 3 + ts
+
+  // Overturning about right toe (for rightward tipping) and left toe (for leftward tipping)
+  // Rightward tipping → overturning about right edge (x = B_total)
+  const Mo_right_tip = Pa_left * arm_Pa_left + Pw_left_ext * arm_Pw_left_ext
+  const Mr_right_tip = Mr_v  // stabilizing moments about right toe need recalculation
+    // Actually we need moments about the RIGHT edge for rightward tipping
+
+  // Recalculate moments about right edge (x_right = B_total)
+  const Mr_about_right = W_left * (B_total - x_left_wall) + W_right * (B_total - x_right_wall)
+    + W_slab * (B_total - x_slab) + W_soil_left * (B_total - x_soil_left)
+    + W_soil_right * (B_total - x_soil_right) + W_water * (B_total - x_water)
+    + W_q_left * (B_total - x_q_left) + W_q_right * (B_total - x_q_right)
+    + Pa_right * arm_Pa_right + Pw_right_ext * arm_Pw_right_ext  // these resist rightward tipping
+
+  const Mo_about_right = Pa_left * arm_Pa_left + Pw_left_ext * arm_Pw_left_ext
+    + Pw_right_int * arm_Pw_right_int  // internal water on right wall pushes rightward
+
+  // Leftward tipping → overturning about left edge (x = 0)
+  const Mr_about_left = Mr_v
+    + Pa_left * arm_Pa_left + Pw_left_ext * arm_Pw_left_ext  // these resist leftward tipping
+
+  const Mo_about_left = Pa_right * arm_Pa_right + Pw_right_ext * arm_Pw_right_ext
+    + Pw_left_int * arm_Pw_left_int
+
+  // Use the WORSE direction
+  const SF_overturn_right = Mo_about_right > 0 ? Mr_about_right / Mo_about_right : 999
+  const SF_overturn_left = Mo_about_left > 0 ? Mr_about_left / Mo_about_left : 999
+  const SF_overturn = Math.min(SF_overturn_right, SF_overturn_left)
+
+  // For reporting, pick the controlling direction
+  let Mr: number, Mo: number
+  if (SF_overturn_right <= SF_overturn_left) {
+    Mr = Mr_about_right; Mo = Mo_about_right
+  } else {
+    Mr = Mr_about_left; Mo = Mo_about_left
+  }
+
+  // ===== Sliding =====
+  const V = W_total
+  const H_abs = Math.abs(H_net)
+  const phi2 = params.phi2_deg > 0 ? params.phi2_deg : phi_deg
+  const mu = Math.tan((phi2 * 2 / 3) * Math.PI / 180)
+  const Hr = c_soil * B_total + V * mu
+  const SF_slide = H_abs > 0 ? Hr / H_abs : 999
+
+  // ===== Eccentricity =====
+  // Net moment about center of base
+  const M_net = Mr - Mo  // net stabilizing moment about controlling edge
+  const e = B_total / 2 - (Mo > 0 ? (Mr - Mo) / V : Mr / V)
+  const B6 = B_total / 6
+
+  // ===== Bearing capacity =====
+  const phi2_rad = phi2 * Math.PI / 180
+  const { Nc, Nq, Nr } = _interpTerzaghi(phi2)
+  const Be = B_total - 2 * Math.abs(e)
+  const gamma_found = params.gamma_found > 0 ? params.gamma_found : gamma_t
+
+  const qu = c_soil * Nc + gamma_found * Df * Nq + 0.5 * gamma_found * Be * Nr
+  const qa = params.qa_fixed > 0 ? params.qa_fixed : qu / 3
+
+  // Contact pressure distribution (trapezoidal or triangular)
+  let Q1: number, Q2: number
+  if (Math.abs(e) <= B6) {
+    // Trapezoidal
+    Q1 = V / B_total * (1 + 6 * e / B_total)  // max
+    Q2 = V / B_total * (1 - 6 * e / B_total)  // min
+  } else {
+    // Triangular (e > B/6)
+    Q1 = 2 * V / (3 * (B_total / 2 - Math.abs(e)))
+    Q2 = 0
+  }
+
+  // Stability judgments
+  const slide_ok = SF_slide >= 1.5
+  const overturn_ok = SF_overturn >= 2.0
+  const ecc_ok = Math.abs(e) <= B6
+  const bearing_ok = Q1 <= qa
+
+  // ===== Member Forces =====
+  // Left wall cantilever (fixed at base, free at top)
+  // Net lateral: earth + external water - internal water
+  const wL_top = q_top_L + 0 - 0  // top: earth only
+  const wL_bot = q_bot_L + pw_left_out - pw_left_in
+  const Mu_left = (H_left * H_left / 6) * (2 * wL_bot + wL_top)
+  const Vu_left = (wL_top + wL_bot) * H_left / 2
+
+  // Right wall cantilever
+  const wR_top = q_top_R + 0 - 0
+  const wR_bot = q_bot_R + pw_right_out - pw_right_in
+  const Mu_right = (H_right * H_right / 6) * (2 * wR_bot + wR_top)
+  const Vu_right = (wR_top + wR_bot) * H_right / 2
+
+  // Bottom slab (fixed-fixed beam, span = B)
+  // Vertical loads on slab
+  const w_self = gamma_c * ts
+  const w_soil_on_slab = 0  // open channel: no soil on slab interior
+  const w_water_slab = gamma_w * hw_in_eff
+  const w_slab_total = w_self + w_soil_on_slab + q + q_live + w_water_slab
+
+  // Ground reaction (upward, simplified as uniform from bearing)
+  const w_net_slab = w_slab_total
+
+  const Mu_slab_end = w_net_slab * B * B / 12
+  const Mu_slab_mid = w_net_slab * B * B / 24
   const Vu_slab = w_net_slab * B / 2
 
+  // --- Load Combinations: 1.2D + 1.6L ---
+  const lf_d = 1.2
+  const lf_l = (q_live > 0) ? 0.6 : 0  // live load factor contribution
+
+  const Mu_left_u = lf_d * Mu_left + lf_l * Mu_left
+  const Vu_left_u = lf_d * Vu_left + lf_l * Vu_left
+
+  const Mu_right_u = lf_d * Mu_right + lf_l * Mu_right
+  const Vu_right_u = lf_d * Vu_right + lf_l * Vu_right
+
+  const Mu_slab_end_u = lf_d * Mu_slab_end + lf_l * Mu_slab_end
+  const Mu_slab_mid_u = lf_d * Mu_slab_mid + lf_l * Mu_slab_mid
+  const Vu_slab_u = lf_d * Vu_slab + lf_l * Vu_slab
+
+  // Cracking moments
+  const tw_left_mm = ((tw_top_left + tw_bot_left) / 2) * 1000
+  const tw_right_mm = ((tw_top_right + tw_bot_right) / 2) * 1000
   const ts_mm = ts * 1000
+  const Mcr_left = (1 / 6) * (0.63 * Math.sqrt(fck)) * 1000 * tw_left_mm * tw_left_mm / 1e6
+  const Mcr_right = (1 / 6) * (0.63 * Math.sqrt(fck)) * 1000 * tw_right_mm * tw_right_mm / 1e6
   const Mcr_slab = (1 / 6) * (0.63 * Math.sqrt(fck)) * 1000 * ts_mm * ts_mm / 1e6
 
-  // --- Load Combinations ---
-  // LCB1 (상시): 1.2D + 1.6L
-  // LCB2 (극한): 1.4D (토압+수압) — simplified
-  const Mu_wall_u = 1.2 * Mu_wall + 0.6 * Mu_wall * (q_live > 0 ? 1 : 0)
-  const Vu_wall_u = 1.2 * Vu_wall + 0.6 * Vu_wall * (q_live > 0 ? 1 : 0)
-  const Mu_slab_end_u = 1.2 * Mu_slab_end + 0.6 * Mu_slab_end * (q_live > 0 ? 1 : 0)
-  const Mu_slab_mid_u = 1.2 * Mu_slab_mid + 0.6 * Mu_slab_mid * (q_live > 0 ? 1 : 0)
-  const Vu_slab_u = 1.2 * Vu_slab + 0.6 * Vu_slab * (q_live > 0 ? 1 : 0)
-
-  // --- Section Checks ---
-  // Side wall (내측 = 토압 인장측)
-  const sec_wall_in = sectionCheck(
-    Mu_wall_u, Mcr_wall, Vu_wall_u,
-    tw_mm, params.Dc_wall,
-    params.wall_in_dia, _rebarArea(params.wall_in_dia), params.wall_in_spacing,
-    fck, fy, '측벽 내측'
+  // ===== Section Checks =====
+  // Left wall inner (토압 인장측)
+  const sec_left_in = sectionCheck(
+    Mu_left_u, Mcr_left, Vu_left_u,
+    tw_left_mm, params.Dc_wall,
+    params.wall_left_in_dia, _rebarArea(params.wall_left_in_dia), params.wall_left_in_spacing,
+    fck, fy, '좌측벽 내측',
   )
-
-  // Side wall (외측)
-  const sec_wall_out = sectionCheck(
-    Mu_wall_u * 0.5, Mcr_wall, Vu_wall_u * 0.5,
-    tw_mm, params.Dc_wall,
-    params.wall_out_dia, _rebarArea(params.wall_out_dia), params.wall_out_spacing,
-    fck, fy, '측벽 외측'
+  // Left wall outer
+  const sec_left_out = sectionCheck(
+    Mu_left_u * 0.5, Mcr_left, Vu_left_u * 0.5,
+    tw_left_mm, params.Dc_wall,
+    params.wall_left_out_dia, _rebarArea(params.wall_left_out_dia), params.wall_left_out_spacing,
+    fck, fy, '좌측벽 외측',
   )
-
-  // Bottom slab — end (top face in tension = 상면)
+  // Right wall inner
+  const sec_right_in = sectionCheck(
+    Mu_right_u, Mcr_right, Vu_right_u,
+    tw_right_mm, params.Dc_wall,
+    params.wall_right_in_dia, _rebarArea(params.wall_right_in_dia), params.wall_right_in_spacing,
+    fck, fy, '우측벽 내측',
+  )
+  // Right wall outer
+  const sec_right_out = sectionCheck(
+    Mu_right_u * 0.5, Mcr_right, Vu_right_u * 0.5,
+    tw_right_mm, params.Dc_wall,
+    params.wall_right_out_dia, _rebarArea(params.wall_right_out_dia), params.wall_right_out_spacing,
+    fck, fy, '우측벽 외측',
+  )
+  // Slab end (top face tension)
   const sec_slab_end = sectionCheck(
     Mu_slab_end_u, Mcr_slab, Vu_slab_u,
     ts_mm, params.Dc_slab,
     params.slab_top_dia, _rebarArea(params.slab_top_dia), params.slab_top_spacing,
-    fck, fy, '저판 단부 (상면)'
+    fck, fy, '저판 단부 (상면)',
   )
-
-  // Bottom slab — mid (bottom face in tension = 하면)
+  // Slab mid (bottom face tension)
   const sec_slab_mid = sectionCheck(
     Mu_slab_mid_u, Mcr_slab, Vu_slab_u * 0.5,
     ts_mm, params.Dc_slab,
     params.slab_bot_dia, _rebarArea(params.slab_bot_dia), params.slab_bot_spacing,
-    fck, fy, '저판 중앙 (하면)'
+    fck, fy, '저판 중앙 (하면)',
   )
 
-  // --- Judgment ---
-  const all_flexure = [sec_wall_in, sec_wall_out, sec_slab_end, sec_slab_mid].every(s => s.flexure_ok)
-  const all_shear = [sec_wall_in, sec_wall_out, sec_slab_end, sec_slab_mid].every(s => s.shear_ok)
-  const all_crack = [sec_wall_in, sec_wall_out, sec_slab_end, sec_slab_mid].every(s => s.crack_ok)
-  const all_ok = all_flexure && all_shear && all_crack
+  // ===== Judgment =====
+  const left_ok = sec_left_in.flexure_ok && sec_left_in.shear_ok && sec_left_in.crack_ok
+    && sec_left_out.flexure_ok && sec_left_out.shear_ok && sec_left_out.crack_ok
+  const right_ok = sec_right_in.flexure_ok && sec_right_in.shear_ok && sec_right_in.crack_ok
+    && sec_right_out.flexure_ok && sec_right_out.shear_ok && sec_right_out.crack_ok
+  const slab_end_ok = sec_slab_end.flexure_ok && sec_slab_end.shear_ok && sec_slab_end.crack_ok
+  const slab_mid_ok = sec_slab_mid.flexure_ok && sec_slab_mid.shear_ok && sec_slab_mid.crack_ok
+  const stability_ok = slide_ok && overturn_ok && ecc_ok && bearing_ok
+  const all_ok = left_ok && right_ok && slab_end_ok && slab_mid_ok && stability_ok
 
   return {
-    // Geometry
-    geometry: { H, B, tw, ts, haunch, Df, H_total, B_total, H_earth },
-    // Loads
+    geometry: {
+      H_left, H_right, H_max, B, ts, haunch, Df,
+      tw_top_left, tw_bot_left, tw_top_right, tw_bot_right,
+      B_total,
+    },
     loads: {
-      Ka, q_top, q_bot, pw_out_bot, pw_in_bot, q_live,
-      w_net_slab, Mu_wall, Vu_wall,
+      Ka, q_live,
+      q_top_L, q_bot_L, q_top_R, q_bot_R,
+      pw_left_out, pw_left_in, pw_right_out, pw_right_in,
+      w_net_slab,
+      Mu_left, Vu_left, Mu_right, Vu_right,
       Mu_slab_end, Mu_slab_mid, Vu_slab,
-      Mu_wall_u, Vu_wall_u,
+      Mu_left_u, Vu_left_u, Mu_right_u, Vu_right_u,
       Mu_slab_end_u, Mu_slab_mid_u, Vu_slab_u,
     },
-    // Member design
+    stability: {
+      V, H_net, Mr, Mo, e, B6,
+      SF_slide, SF_overturn,
+      Q1, Q2, Be, qu, qa,
+      Nc, Nq, Nr,
+      slide_ok, overturn_ok, ecc_ok, bearing_ok,
+      W_left, W_right, W_slab, W_total,
+      W_soil_left, W_soil_right, W_water,
+    },
     member: {
-      wall_in: sec_wall_in,
-      wall_out: sec_wall_out,
+      left_in: sec_left_in,
+      left_out: sec_left_out,
+      right_in: sec_right_in,
+      right_out: sec_right_out,
       slab_end: sec_slab_end,
       slab_mid: sec_slab_mid,
     },
-    // Judgment
     judgment: {
-      all_ok, all_flexure, all_shear, all_crack,
-      wall_in_ok: sec_wall_in.flexure_ok && sec_wall_in.shear_ok && sec_wall_in.crack_ok,
-      wall_out_ok: sec_wall_out.flexure_ok && sec_wall_out.shear_ok && sec_wall_out.crack_ok,
-      slab_end_ok: sec_slab_end.flexure_ok && sec_slab_end.shear_ok && sec_slab_end.crack_ok,
-      slab_mid_ok: sec_slab_mid.flexure_ok && sec_slab_mid.shear_ok && sec_slab_mid.crack_ok,
+      all_ok,
+      stability_ok,
+      left_ok, right_ok, slab_end_ok, slab_mid_ok,
     },
   }
 }
