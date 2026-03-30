@@ -19,7 +19,7 @@ interface Props {
   keyEnabled?: boolean
   keyDepth?: NumField
   keyWidth?: NumField
-  keyPos?: 'toe' | 'wall' | 'heel' | 'custom'
+  keyPos?: 'toe' | 'wall' | 'center' | 'heel' | 'custom'
   keyX?: NumField
 }
 
@@ -235,6 +235,7 @@ export default function SectionDiagram({
           // 키 위치: key_pos에 따라 결정
           let kx: number
           if (keyPos === 'toe') kx = _c6Toe / 2 - kw / 2
+          else if (keyPos === 'center') kx = B / 2 - kw / 2
           else if (keyPos === 'heel') kx = B - kw
           else if (keyPos === 'custom') kx = (keyX ?? 0)
           else kx = _c6Toe  // 'wall' 기본값 — 벽체 전면

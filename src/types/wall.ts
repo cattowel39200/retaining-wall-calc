@@ -130,7 +130,7 @@ export interface WallFormFields {
   key_enabled: boolean
   key_depth: NumField
   key_width: NumField
-  key_pos: 'toe' | 'wall' | 'heel' | 'custom'  // 키 위치
+  key_pos: 'toe' | 'wall' | 'center' | 'heel' | 'custom'  // 키 위치
   key_x: NumField                                // custom일 때 저판 좌단 기준 거리(m)
 }
 
@@ -278,7 +278,8 @@ export function formToInput(f: WallFormFields): WallInput {
     // key_pos → key_x 변환 (저판 좌단 기준)
     key_x: f.key_pos === 'custom' ? n(f.key_x)
       : f.key_pos === 'toe' ? n(f.C6_toe) / 2
-      : f.key_pos === 'heel' ? (n(f.C6_toe) + t_stem + n(f.batter) + n(f.batter_back) + n(f.C8_heel)) - n(f.key_width) / 2
+      : f.key_pos === 'center' ? B / 2 - n(f.key_width) / 2  // 저판 중앙
+      : f.key_pos === 'heel' ? B - n(f.key_width) / 2
       : n(f.C6_toe) + n(f.key_width) / 2,  // 'wall' — 벽체 전면 바로 앞
   }
 }

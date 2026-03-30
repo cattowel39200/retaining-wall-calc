@@ -258,6 +258,7 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
                   className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white">
                   <option value="toe">Toe (전면)</option>
                   <option value="wall">벽체 하부</option>
+                  <option value="center">저판 중앙</option>
                   <option value="heel">Heel (배면)</option>
                   <option value="custom">직접 입력</option>
                 </select>
