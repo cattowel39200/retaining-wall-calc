@@ -178,25 +178,36 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     Ka = Math.pow(Math.tan(Math.PI / 4 - phi_rad / 2), 2)
   }
 
-  // --- Live load ---
+  // --- Live load (KDS 24 14 21 기준) ---
+  // 토피 < 0.6m: 윤하중 직접 재하
+  // 토피 0.6~2.0m: 45° 분산 (1:1)
+  // 토피 ≥ 2.0m: 45° 분산, 인접차로 합산 가능
   let q_live = 0
   if (params.live_load === 'DB24') {
-    const wheel_load = 96
-    const tire_width = 0.5
-    const spread_width = tire_width + 2 * Df * 1.0
-    const spread_length = 0.2 + 2 * Df * 1.0
-    q_live = spread_width > 0 && spread_length > 0
-      ? wheel_load / (spread_width * spread_length)
-      : 0
-    q_live = Math.min(q_live, 64)
+    const wheel_load = 96   // kN (후륜 1축 하중)
+    const tire_width = 0.5  // m (타이어 접지폭)
+    const tire_length = 0.2 // m (타이어 접지길이)
+    if (Df < 0.6) {
+      // 직접 재하 (분산 없음)
+      q_live = wheel_load / (tire_width * tire_length)
+    } else {
+      // 45° 분산 (1:1)
+      const spread_width = tire_width + 2 * Df
+      const spread_length = tire_length + 2 * Df
+      q_live = wheel_load / (spread_width * spread_length)
+    }
+    q_live = Math.min(q_live, 64)  // 상한
   } else if (params.live_load === 'DB18') {
     const wheel_load = 72
     const tire_width = 0.5
-    const spread_width = tire_width + 2 * Df * 1.0
-    const spread_length = 0.2 + 2 * Df * 1.0
-    q_live = spread_width > 0 && spread_length > 0
-      ? wheel_load / (spread_width * spread_length)
-      : 0
+    const tire_length = 0.2
+    if (Df < 0.6) {
+      q_live = wheel_load / (tire_width * tire_length)
+    } else {
+      const spread_width = tire_width + 2 * Df
+      const spread_length = tire_length + 2 * Df
+      q_live = wheel_load / (spread_width * spread_length)
+    }
     q_live = Math.min(q_live, 48)
   } else if (params.live_load === 'manual') {
     q_live = params.live_load_manual
@@ -255,8 +266,15 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
   // ===== Moment arms about left toe (x from left edge of base slab) =====
   // Left wall centroid: for trapezoid, centroid from left edge
   // Left wall sits on left portion of slab (0 to tw_bot_left)
-  const x_left_wall = tw_bot_left / 2  // approximate centroid of left wall
-  const x_right_wall = tw_bot_left + B + tw_bot_right / 2
+  // 사다리꼴 도심: (2a+b)/(3(a+b)) × h (a=하단, b=상단)
+  const x_left_centroid = (tw_top_left + tw_bot_left) > 0
+    ? tw_bot_left * (2 * tw_bot_left + tw_top_left) / (3 * (tw_bot_left + tw_top_left))
+    : tw_bot_left / 2
+  const x_left_wall = x_left_centroid
+  const x_right_centroid = (tw_top_right + tw_bot_right) > 0
+    ? tw_bot_right * (2 * tw_top_right + tw_bot_right) / (3 * (tw_top_right + tw_bot_right))
+    : tw_bot_right / 2
+  const x_right_wall = tw_bot_left + B + tw_bot_right - x_right_centroid
   const x_slab = B_total / 2
   const x_soil_left = tw_top_left / 2  // soil on top of left wall
   const x_soil_right = tw_bot_left + B + tw_top_right / 2  // approximate
@@ -348,9 +366,7 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
   const SF_slide = H_abs > 0 ? Hr / H_abs : 999
 
   // ===== Eccentricity =====
-  // Net moment about center of base
-  const M_net = Mr - Mo  // net stabilizing moment about controlling edge
-  const e = B_total / 2 - (Mo > 0 ? (Mr - Mo) / V : Mr / V)
+  const e = V > 0 ? B_total / 2 - (Mr - Mo) / V : 0
   const B6 = B_total / 6
 
   // ===== Bearing capacity =====
@@ -359,7 +375,11 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
   const Be = B_total - 2 * Math.abs(e)
   const gamma_found = params.gamma_found > 0 ? params.gamma_found : gamma_t
 
-  const qu = c_soil * Nc + gamma_found * Df * Nq + 0.5 * gamma_found * Be * Nr
+  // 지지력: 외수위가 기초깊이 이상이면 유효단위중량 사용
+  const gamma_eff = params.hw_out >= Df && params.hw_out > 0
+    ? gamma_found - gamma_w  // 수중 유효단위중량
+    : gamma_found
+  const qu = c_soil * Nc + gamma_found * Df * Nq + 0.5 * gamma_eff * Be * Nr
   const qa = params.qa_fixed > 0 ? params.qa_fixed : qu / 3
 
   // Contact pressure distribution (trapezoidal or triangular)
@@ -370,7 +390,8 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
     Q2 = V / B_total * (1 - 6 * e / B_total)  // min
   } else {
     // Triangular (e > B/6)
-    Q1 = 2 * V / (3 * (B_total / 2 - Math.abs(e)))
+    const denom = 3 * (B_total / 2 - Math.abs(e))
+    Q1 = denom > 0.001 ? 2 * V / denom : 0
     Q2 = 0
   }
 
@@ -381,46 +402,82 @@ export function calculateChannel(params: ChannelInput): Record<string, any> {
   const bearing_ok = Q1 <= qa
 
   // ===== Member Forces =====
-  // Left wall cantilever (fixed at base, free at top)
-  // Net lateral: earth + external water - internal water
-  const wL_top = q_top_L + 0 - 0  // top: earth only
-  const wL_bot = q_bot_L + pw_left_out - pw_left_in
-  const Mu_left = (H_left * H_left / 6) * (2 * wL_bot + wL_top)
-  const Vu_left = (wL_top + wL_bot) * H_left / 2
+  // ===== Member Forces (사하중/활하중 분리) =====
+  // --- 좌측벽 캔틸레버 ---
+  // 사하중 토압 (q, q_live 제외)
+  const qD_top_L = Ka * (gamma_t * Df_left)
+  const qD_bot_L = Ka * (gamma_t * (Df_left + H_left))
+  // 활하중 토압 (q_live 성분만)
+  const qL_top_L = Ka * q_live
+  const qL_bot_L = Ka * q_live
+  // 수압 (사하중 취급)
+  const wLD_top = qD_top_L + Ka * q - 0  // 사하중 상단 (상재 포함)
+  const wLD_bot = qD_bot_L + Ka * q + pw_left_out - pw_left_in  // 사하중 하단
+  const wLL_top = qL_top_L  // 활하중 상단
+  const wLL_bot = qL_bot_L  // 활하중 하단
 
-  // Right wall cantilever
-  const wR_top = q_top_R + 0 - 0
-  const wR_bot = q_bot_R + pw_right_out - pw_right_in
-  const Mu_right = (H_right * H_right / 6) * (2 * wR_bot + wR_top)
-  const Vu_right = (wR_top + wR_bot) * H_right / 2
+  const Mu_left_D = (H_left ** 2 / 6) * (2 * wLD_bot + wLD_top)
+  const Mu_left_L = (H_left ** 2 / 6) * (2 * wLL_bot + wLL_top)
+  const Vu_left_D = (wLD_top + wLD_bot) * H_left / 2
+  const Vu_left_L = (wLL_top + wLL_bot) * H_left / 2
+  const Mu_left = Mu_left_D + Mu_left_L
+  const Vu_left = Vu_left_D + Vu_left_L
 
-  // Bottom slab (fixed-fixed beam, span = B)
-  // Vertical loads on slab
-  const w_self = gamma_c * ts
-  const w_soil_on_slab = 0  // open channel: no soil on slab interior
-  const w_water_slab = gamma_w * hw_in_eff
-  const w_slab_total = w_self + w_soil_on_slab + q + q_live + w_water_slab
+  // --- 우측벽 캔틸레버 ---
+  const qD_top_R = Ka * (gamma_t * Df_right)
+  const qD_bot_R = Ka * (gamma_t * (Df_right + H_right))
+  const qL_top_R = Ka * q_live
+  const qL_bot_R = Ka * q_live
+  const wRD_top = qD_top_R + Ka * q - 0
+  const wRD_bot = qD_bot_R + Ka * q + pw_right_out - pw_right_in
+  const wRL_top = qL_top_R
+  const wRL_bot = qL_bot_R
 
-  // Ground reaction (upward, simplified as uniform from bearing)
-  const w_net_slab = w_slab_total
+  const Mu_right_D = (H_right ** 2 / 6) * (2 * wRD_bot + wRD_top)
+  const Mu_right_L = (H_right ** 2 / 6) * (2 * wRL_bot + wRL_top)
+  const Vu_right_D = (wRD_top + wRD_bot) * H_right / 2
+  const Vu_right_L = (wRL_top + wRL_bot) * H_right / 2
+  const Mu_right = Mu_right_D + Mu_right_L
+  const Vu_right = Vu_right_D + Vu_right_L
 
-  const Mu_slab_end = w_net_slab * B * B / 12
-  const Mu_slab_mid = w_net_slab * B * B / 24
-  const Vu_slab = w_net_slab * B / 2
+  // --- 저판 (양단 고정보, 스팬 = B) ---
+  // 하향 하중
+  const w_self = gamma_c * ts                     // 자중 (D)
+  const w_water_slab = gamma_w * hw_in_eff         // 내수 (D)
+  const w_slab_D = w_self + w_water_slab + q       // 사하중 합계
+  const w_slab_L = q_live                          // 활하중
 
-  // --- Load Combinations: 1.2D + 1.6L ---
-  const lf_d = 1.2
-  const lf_l = (q_live > 0) ? 0.6 : 0  // live load factor contribution
+  // 상향 지반반력 (안정검토 접지압 기반, 균등분포 근사)
+  const q_ground = V > 0 ? V / B_total : 0        // 평균 접지압
+  // 저판 구간 접지압 (내폭 B 범위, 저판 좌단에서 tw_bot_left ~ tw_bot_left+B)
+  const w_ground_up = q_ground                     // 상향 (D)
 
-  const Mu_left_u = lf_d * Mu_left + lf_l * Mu_left
-  const Vu_left_u = lf_d * Vu_left + lf_l * Vu_left
+  // 순 하중 (하향 양수)
+  const w_net_slab_D = w_slab_D - w_ground_up
+  const w_net_slab = w_net_slab_D + w_slab_L
 
-  const Mu_right_u = lf_d * Mu_right + lf_l * Mu_right
-  const Vu_right_u = lf_d * Vu_right + lf_l * Vu_right
+  // 양단 고정보 모멘트
+  const Mu_slab_end_D = w_net_slab_D * B * B / 12
+  const Mu_slab_end_L = w_slab_L * B * B / 12
+  const Mu_slab_mid_D = w_net_slab_D * B * B / 24
+  const Mu_slab_mid_L = w_slab_L * B * B / 24
+  const Vu_slab_D = w_net_slab_D * B / 2
+  const Vu_slab_L = w_slab_L * B / 2
 
-  const Mu_slab_end_u = lf_d * Mu_slab_end + lf_l * Mu_slab_end
-  const Mu_slab_mid_u = lf_d * Mu_slab_mid + lf_l * Mu_slab_mid
-  const Vu_slab_u = lf_d * Vu_slab + lf_l * Vu_slab
+  const Mu_slab_end = Mu_slab_end_D + Mu_slab_end_L
+  const Mu_slab_mid = Mu_slab_mid_D + Mu_slab_mid_L
+  const Vu_slab = Vu_slab_D + Vu_slab_L
+
+  // --- 하중조합: U = 1.2D + 1.6L (KDS 14 20 20) ---
+  const Mu_left_u = 1.2 * Mu_left_D + 1.6 * Mu_left_L
+  const Vu_left_u = 1.2 * Vu_left_D + 1.6 * Vu_left_L
+
+  const Mu_right_u = 1.2 * Mu_right_D + 1.6 * Mu_right_L
+  const Vu_right_u = 1.2 * Vu_right_D + 1.6 * Vu_right_L
+
+  const Mu_slab_end_u = 1.2 * Mu_slab_end_D + 1.6 * Mu_slab_end_L
+  const Mu_slab_mid_u = 1.2 * Mu_slab_mid_D + 1.6 * Mu_slab_mid_L
+  const Vu_slab_u = 1.2 * Vu_slab_D + 1.6 * Vu_slab_L
 
   // Cracking moments
   const tw_left_mm = ((tw_top_left + tw_bot_left) / 2) * 1000

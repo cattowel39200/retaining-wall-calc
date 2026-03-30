@@ -440,7 +440,12 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   const KAE = num_KAE / den_KAE;
 
   const PAE = 0.5 * KAE * gamma_t * He ** 2;
-  const yae = He / 2;
+  // Seed & Whitman (1970): 동적 증분 토압 작용점 = 0.6H
+  // 전체 지진토압 작용점 = (Pa·H/3 + ΔPae·0.6H) / PAE
+  const delta_PAE = PAE - Pa_total;
+  const yae = PAE > 0 && delta_PAE > 0
+    ? (Pa_total * (He / 3) + delta_PAE * (0.6 * He)) / PAE
+    : He / 3;
   const Mo_pae = PAE * yae;
 
   // 과재하중
