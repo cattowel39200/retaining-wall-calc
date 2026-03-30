@@ -1,6 +1,6 @@
 'use client'
 import type { ChannelFormFields, NumField } from '@/types/channel'
-import { SOIL_PRESETS, DESIGN_PRESETS, REBAR_DIAS } from '@/lib/presets'
+import { SOIL_PRESETS, REBAR_DIAS } from '@/lib/presets'
 
 interface Props {
   fields: ChannelFormFields
@@ -110,18 +110,8 @@ export default function ChannelForm({ fields, onChange }: Props) {
       </Section>
 
       {/* 설계조건 */}
-      <Section title="설계조건" defaultOpen>
+      <Section title="설계조건">
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-          <label className="flex flex-col gap-0.5 col-span-2">
-            <span className="text-xs text-gray-500">설계조건 프리셋</span>
-            <select onChange={e => {
-              const p = DESIGN_PRESETS[parseInt(e.target.value)]
-              if (p) set({ fck: p.fck, fy: p.fy, gamma_c: p.gamma_c, Dc_wall: p.Dc_wall, Dc_slab: p.Dc_slab, q: p.q })
-            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white" defaultValue="0">
-              {DESIGN_PRESETS.map((p, i) => <option key={i} value={i}>{p.label}</option>)}
-            </select>
-          </label>
-          <p className="col-span-2 text-xs text-gray-400 -mt-1">프리셋 선택 시 아래 값이 자동 반영됩니다</p>
           <Num label="fck (MPa)" value={f.fck} step={3} onChange={v => set({ fck: v })} />
           <Num label="fy (MPa)" value={f.fy} step={100} onChange={v => set({ fy: v })} />
           <Num label="콘크리트 γc (kN/m³)" value={f.gamma_c} step={0.5} onChange={v => set({ gamma_c: v })} />
@@ -129,6 +119,7 @@ export default function ChannelForm({ fields, onChange }: Props) {
           <Num label="벽체 피복 (mm)" value={f.Dc_wall} step={10} onChange={v => set({ Dc_wall: v })} />
           <Num label="저판 피복 (mm)" value={f.Dc_slab} step={10} onChange={v => set({ Dc_slab: v })} />
         </div>
+        <p className="text-xs text-gray-400 mt-1">KDS 기준 기본값이 적용됩니다. 필요 시 수정 가능</p>
       </Section>
 
       {/* 철근 배근 (자동) */}

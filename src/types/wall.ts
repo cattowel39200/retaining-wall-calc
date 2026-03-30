@@ -143,6 +143,7 @@ export function getDefaultFormFields(wallType: WallType): WallFormFields {
     conn_h: null,
     Hs_gap: null,
 
+    // 지반 (프리셋 선택으로 설정)
     gamma_t: null,
     phi_deg: null,
     c_soil: null,
@@ -151,12 +152,13 @@ export function getDefaultFormFields(wallType: WallType): WallFormFields {
     phi2_deg: null,
     gamma_found: null,
 
-    q: null,
-    gamma_c: null,
-    Kh: null,
+    // 설계조건 기본값 (KDS 기준)
+    q: 10,           // 상재하중 kN/m²
+    gamma_c: 24,     // 콘크리트 단위중량 kN/m³
+    Kh: 0.077,       // 내진계수 (I등급)
 
-    fck: null,
-    fy: null,
+    fck: 24,         // 콘크리트 설계기준강도 MPa (KDS 일반환경)
+    fy: 400,         // 철근 항복강도 MPa (SD400)
 
     rebar1_dia: 22,
     rebar1_spacing: null,
@@ -167,9 +169,9 @@ export function getDefaultFormFields(wallType: WallType): WallFormFields {
     rebar_toe_dia: null,
     rebar_toe_spacing: null,
 
-    Dc_slab: null,
-    Dc_wall: null,
-    Dc_toe: null,
+    Dc_slab: 80,     // 피복두께 mm (지중매설 기준)
+    Dc_wall: 80,
+    Dc_toe: 80,
 
     gwl_height: null,
     gamma_sat: null,

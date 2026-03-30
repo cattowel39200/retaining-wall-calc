@@ -123,19 +123,21 @@ export function getDefaultChannelFields(): ChannelFormFields {
     H_left: null, tw_top_left: null, tw_bot_left: null,
     H_right: null, tw_top_right: null, tw_bot_right: null,
     B: null, ts: null, haunch: null,
+    // 지반 (프리셋 선택으로 설정)
     Df: null, gamma_t: null, phi_deg: null, c_soil: null,
     K0_mode: 'rankine', K0_manual: null,
     phi2_deg: null, gamma_found: null, qa_fixed: null,
     hw_in: null, hw_out: null,
-    q: null, live_load: 'none', live_load_manual: null, gamma_c: null,
-    fck: null, fy: null,
+    // 설계조건 기본값 (KDS 기준)
+    q: 10, live_load: 'DB24', live_load_manual: null, gamma_c: 24,
+    fck: 24, fy: 400,
     wall_left_in_dia: 16, wall_left_in_spacing: null,
     wall_left_out_dia: 16, wall_left_out_spacing: null,
     wall_right_in_dia: 16, wall_right_in_spacing: null,
     wall_right_out_dia: 16, wall_right_out_spacing: null,
     slab_top_dia: 16, slab_top_spacing: null,
     slab_bot_dia: 16, slab_bot_spacing: null,
-    Dc_wall: null, Dc_slab: null,
+    Dc_wall: 80, Dc_slab: 80, // 피복두께 mm (지중매설 기준)
   }
 }
 
