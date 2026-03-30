@@ -231,6 +231,38 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
         </div>
         <p className="text-xs text-gray-400 mt-1">0이면 Terzaghi 공식 자동 계산</p>
       </Section>
+
+      {/* 활동방지키 */}
+      {!isGravity && (
+        <Section title="활동방지키 (Key)">
+          <label className="flex items-center gap-2 mb-2">
+            <input type="checkbox" checked={f.key_enabled}
+              onChange={e => set({ key_enabled: e.target.checked })}
+              className="accent-blue-600" />
+            <span className="text-sm">활동방지키 적용</span>
+          </label>
+          {f.key_enabled && (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+              <Num label="키 깊이 (m)" value={f.key_depth} step={0.05}
+                onChange={v => set({ key_depth: v })} />
+              <Num label="키 폭 (m)" value={f.key_width} step={0.05}
+                onChange={v => set({ key_width: v })} />
+            </div>
+          )}
+          <label className="flex items-center gap-2 mt-2">
+            <input type="checkbox" checked={f.passive_enabled}
+              onChange={e => set({ passive_enabled: e.target.checked })}
+              className="accent-blue-600" />
+            <span className="text-sm">수동토압 적용</span>
+          </label>
+          {f.passive_enabled && (
+            <div className="mt-1">
+              <Num label="수동토압 적용비율 (%)" value={f.passive_ratio} step={10}
+                onChange={v => set({ passive_ratio: v })} />
+            </div>
+          )}
+        </Section>
+      )}
     </div>
   )
 }
