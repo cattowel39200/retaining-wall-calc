@@ -3,10 +3,10 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'StructCheck — 구조검토 클라우드',
-  description: '설치 없이 웹에서 즉시, KDS 기준 옹벽 구조검토 + 보고서 자동 생성. 무료로 시작하세요.',
+  description: '설치 없이 웹에서 즉시, KDS 기준 옹벽·U형개거 구조검토 + 우수 수리계산 + 보고서 자동 생성. 무료로 시작하세요.',
   openGraph: {
     title: 'StructCheck — 구조검토 클라우드',
-    description: '설치 없이 웹에서 즉시, KDS 기준 옹벽 구조검토 + 보고서 자동 생성',
+    description: '설치 없이 웹에서 즉시, KDS 기준 옹벽·U형개거 구조검토 + 우수 수리계산 + 보고서 자동 생성',
     type: 'website',
   },
 }
@@ -27,7 +27,7 @@ export default function LandingPage() {
               <span className="text-blue-300">웹에서 바로.</span>
             </h1>
             <p className="mt-6 text-lg text-blue-100 sm:text-xl max-w-2xl">
-              설치 없이 브라우저에서 옹벽 구조검토와 우수 수리계산을 즉시 수행하고,
+              설치 없이 브라우저에서 옹벽 구조검토, U형개거 설계, 우수 수리계산을 즉시 수행하고,
               보고서를 자동 생성합니다. 무료로 시작하세요.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
@@ -43,6 +43,12 @@ export default function LandingPage() {
               >
                 수리계산서
               </a>
+              <Link
+                href="/channel"
+                className="rounded-lg bg-amber-500 px-8 py-3.5 text-lg font-bold text-white shadow-lg hover:bg-amber-600 transition-colors"
+              >
+                U형개거
+              </Link>
               <a
                 href="#features"
                 className="rounded-lg border-2 border-white/30 px-8 py-3.5 text-lg font-medium hover:bg-white/10 transition-colors"
@@ -59,7 +65,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-5 text-center">
             {[
-              ['2종', '검토 프로그램'],
+              ['3종', '검토 프로그램'],
               ['4종', '옹벽 형식'],
               ['KDS', '최신 기준'],
               ['즉시', '결과 확인'],
@@ -82,20 +88,26 @@ export default function LandingPage() {
             기존 고가의 설치형 프로그램 대신, 웹 브라우저 하나로 건설 엔지니어링 검토를 완료합니다.
           </p>
 
-          {/* 서비스 카드 2개 */}
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {/* 서비스 카드 3개 */}
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
             <Link href="/calc" className="block rounded-xl border-2 border-blue-200 bg-blue-50 p-8 hover:border-blue-400 hover:shadow-lg transition-all">
               <div className="text-3xl mb-3">📐</div>
               <h3 className="text-xl font-bold text-blue-800">옹벽 구조검토</h3>
               <p className="mt-2 text-sm text-blue-600">L형, 역L형, 역T형, 중력식 4종 옹벽. KDS 기준 안정검토 + 단면검토 + Word 보고서 자동 생성.</p>
               <div className="mt-4 text-sm font-bold text-blue-700">시작하기 →</div>
             </Link>
-            <a href="/hydro" className="block rounded-xl border-2 border-emerald-200 bg-emerald-50 p-8 hover:border-emerald-400 hover:shadow-lg transition-all">
+            <Link href="/hydro" className="block rounded-xl border-2 border-emerald-200 bg-emerald-50 p-8 hover:border-emerald-400 hover:shadow-lg transition-all">
               <div className="text-3xl mb-3">🌊</div>
               <h3 className="text-xl font-bold text-emerald-800">우수 수리계산서</h3>
               <p className="mt-2 text-sm text-emerald-600">강우강도식, Manning 유속, 원형관/BOX/U형 수로. 구간별 수리검토 + 보고서 인쇄.</p>
               <div className="mt-4 text-sm font-bold text-emerald-700">시작하기 →</div>
-            </a>
+            </Link>
+            <Link href="/channel" className="block rounded-xl border-2 border-amber-200 bg-amber-50 p-8 hover:border-amber-400 hover:shadow-lg transition-all">
+              <div className="text-3xl mb-3">🏗️</div>
+              <h3 className="text-xl font-bold text-amber-800">U형개거 구조검토</h3>
+              <p className="mt-2 text-sm text-amber-600">토압+수압+활하중(DB-24). 측벽·저판 RC 단면검토 (휨/전단/균열). KDS 기준.</p>
+              <div className="mt-4 text-sm font-bold text-amber-700">시작하기 →</div>
+            </Link>
           </div>
 
           <h3 className="text-center text-2xl font-bold text-gray-900 mt-16 mb-4">주요 기능</h3>
@@ -116,6 +128,11 @@ export default function LandingPage() {
                 icon: '🌊',
                 title: '우수 수리계산',
                 desc: '강우강도, Manning 유속, Rational Method. 원형관, BOX, U형 수로 검토.',
+              },
+              {
+                icon: '🏗️',
+                title: 'U형개거 설계',
+                desc: '토압+수압+활하중. 측벽·저판 RC 단면검토 (휨/전단/균열).',
               },
               {
                 icon: '📄',
@@ -191,6 +208,7 @@ export default function LandingPage() {
                 {[
                   '옹벽 4종 (L형/역L형/역T형/중력식)',
                   '우수 수리계산서 (관/BOX/수로)',
+                  'U형개거 구조검토 (토압+수압+활하중)',
                   '안정검토 + 단면검토 + 부재설계',
                   'Word 보고서 / 수리계산서 인쇄',
                   'SVG 표준단면도',
@@ -264,7 +282,8 @@ export default function LandingPage() {
             </div>
             <div className="flex gap-6 text-sm text-gray-500">
               <Link href="/calc" className="hover:text-blue-600">옹벽 구조검토</Link>
-              <a href="/hydro" className="hover:text-emerald-600">수리계산서</a>
+              <Link href="/hydro" className="hover:text-emerald-600">수리계산서</Link>
+              <Link href="/channel" className="hover:text-amber-600">U형개거</Link>
               <a href="#features" className="hover:text-blue-600">기능</a>
               <a href="#pricing" className="hover:text-blue-600">요금</a>
               <a href="mailto:structcheck@gmail.com" className="hover:text-blue-600">문의</a>
