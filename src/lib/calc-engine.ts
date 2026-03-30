@@ -1011,37 +1011,37 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
     sec_AA = null;
   } else if (is_semi_gravity) {
     const H_sec_cc = !is_gravity ? t_stem_bot * 1000 : B * 1000;
-    sec_CC = sectionCheck(Mu_CC, Mcr_CC, Vu_CC, H_sec_cc, Dc_wall,
-                          rebar3_dia, rebar3_area, rebar3_spacing, "벽체하부 (C-C)");
     auto_CC = autoSelectRebar(Mu_CC, Vu_CC, H_sec_cc, Dc_wall, fck, fy);
+    sec_CC = sectionCheck(Mu_CC, Mcr_CC, Vu_CC, H_sec_cc, Dc_wall,
+                          auto_CC.main_dia, _rebarArea(auto_CC.main_dia), auto_CC.main_spacing, "벽체하부 (C-C)");
     sec_BB = null;
     sec_DD = null;
     sec_AA = null;
   } else {
     // L형/역L형/역T형
     if (has_heel) {
-      sec_BB = sectionCheck(Mu_BB, Mcr_BB, Vu_BB, D_slab * 1000, Dc_slab,
-                            rebar1_dia, rebar1_area, rebar1_spacing, "저판 (B-B)");
       auto_BB = autoSelectRebar(Mu_BB, Vu_BB, D_slab * 1000, Dc_slab, fck, fy);
+      sec_BB = sectionCheck(Mu_BB, Mcr_BB, Vu_BB, D_slab * 1000, Dc_slab,
+                            auto_BB.main_dia, _rebarArea(auto_BB.main_dia), auto_BB.main_spacing, "저판 (B-B)");
     } else {
       sec_BB = null;
     }
 
     const H_sec_cc = t_stem_bot * 1000;
-    sec_CC = sectionCheck(Mu_CC, Mcr_CC, Vu_CC, H_sec_cc, Dc_wall,
-                          rebar3_dia, rebar3_area, rebar3_spacing, "벽체하부 (C-C)");
     auto_CC = autoSelectRebar(Mu_CC, Vu_CC, H_sec_cc, Dc_wall, fck, fy);
+    sec_CC = sectionCheck(Mu_CC, Mcr_CC, Vu_CC, H_sec_cc, Dc_wall,
+                          auto_CC.main_dia, _rebarArea(auto_CC.main_dia), auto_CC.main_spacing, "벽체하부 (C-C)");
 
     const t_stem_mid = t_stem + (batter + batter_back) / 2;
     const H_sec_dd = t_stem_mid * 1000;
-    sec_DD = sectionCheck(Mu_DD, Mcr_DD, Vu_DD, H_sec_dd, Dc_wall,
-                          rebar2_dia, rebar2_area, rebar2_spacing, "벽체중앙 (D-D)");
     auto_DD = autoSelectRebar(Mu_DD, Vu_DD, H_sec_dd, Dc_wall, fck, fy);
+    sec_DD = sectionCheck(Mu_DD, Mcr_DD, Vu_DD, H_sec_dd, Dc_wall,
+                          auto_DD.main_dia, _rebarArea(auto_DD.main_dia), auto_DD.main_spacing, "벽체중앙 (D-D)");
 
     if (has_toe) {
-      sec_AA = sectionCheck(Mu_AA, Mcr_AA, Vu_AA, D_slab * 1000, Dc_toe,
-                            rebar_toe_dia, rebar_toe_area, rebar_toe_spacing, "앞굽판 (A-A)");
       auto_AA = autoSelectRebar(Mu_AA, Vu_AA, D_slab * 1000, Dc_toe, fck, fy);
+      sec_AA = sectionCheck(Mu_AA, Mcr_AA, Vu_AA, D_slab * 1000, Dc_toe,
+                            auto_AA.main_dia, _rebarArea(auto_AA.main_dia), auto_AA.main_spacing, "앞굽판 (A-A)");
     } else {
       sec_AA = null;
     }
