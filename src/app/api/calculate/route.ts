@@ -22,6 +22,9 @@ export async function POST(request: NextRequest) {
   try {
     const params = await request.json()
     const results = calculateWall(params)
+    if (results && typeof results === 'object' && 'error' in results) {
+      return NextResponse.json({ detail: results.error }, { status: 400 })
+    }
     return NextResponse.json({ data: sanitize(results) })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)

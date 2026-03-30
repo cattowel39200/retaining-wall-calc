@@ -79,8 +79,13 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   const is_semi_gravity = (params['semi_gravity'] ?? false) && is_gravity;
 
   // --- 입력값 추출 ---
-  const H = params['H'];
-  const B = params['B'];
+  const H = params['H'] || 0;
+  const B = params['B'] || 0;
+
+  // 치수 미입력 시 조기 반환
+  if (H <= 0 || B <= 0) {
+    return { error: '옹벽 치수(H, B)를 입력해 주세요.' };
+  }
   const t_stem = params['t_stem'];
   const batter = params['batter'] ?? 0.0;
   const batter_back = params['batter_back'] ?? 0.0;
@@ -110,14 +115,14 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   const gwl_height = params['gwl_height'] ?? 0.0;
 
   const rebar1_dia = params['rebar1_dia'] ?? 13;
-  const rebar1_spacing = params['rebar1_spacing'] ?? 125;
+  const rebar1_spacing = params['rebar1_spacing'] || 125;
   const rebar2_dia = params['rebar2_dia'] ?? 13;
-  const rebar2_spacing = params['rebar2_spacing'] ?? 250;
+  const rebar2_spacing = params['rebar2_spacing'] || 250;
   const rebar3_dia = params['rebar3_dia'] ?? rebar1_dia;
-  const rebar3_spacing = params['rebar3_spacing'] ?? rebar1_spacing;
+  const rebar3_spacing = params['rebar3_spacing'] || rebar1_spacing;
 
   const rebar_toe_dia = params['rebar_toe_dia'] ?? rebar1_dia;
-  const rebar_toe_spacing = params['rebar_toe_spacing'] ?? rebar1_spacing;
+  const rebar_toe_spacing = params['rebar_toe_spacing'] || rebar1_spacing;
 
   const rebar1_area = _rebarArea(rebar1_dia);
   const rebar2_area = _rebarArea(rebar2_dia);
@@ -894,7 +899,7 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
     sec_name: string,
   ): Record<string, any> {
     const D_sec = H_sec_mm - Dc_mm;
-    const As = r_area * 1000 / r_spacing;
+    const As = r_spacing > 0 ? r_area * 1000 / r_spacing : 0;
     const rho = D_sec > 0 ? As / (1000 * D_sec) : 0;
 
     const a = fck > 0 ? (As * fy) / (0.85 * fck * 1000) : 0;
