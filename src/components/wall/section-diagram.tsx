@@ -19,11 +19,13 @@ interface Props {
   keyEnabled?: boolean
   keyDepth?: NumField
   keyWidth?: NumField
+  keyPos?: 'toe' | 'wall' | 'heel' | 'custom'
+  keyX?: NumField
 }
 
 export default function SectionDiagram({
   wallType, stemTop, hStem, batter, batterBack, c6Toe, c8Heel, dSlab, hsGap, gwlHeight,
-  slopeType, slopeN, slopeBerm, keyEnabled, keyDepth, keyWidth,
+  slopeType, slopeN, slopeBerm, keyEnabled, keyDepth, keyWidth, keyPos, keyX,
 }: Props) {
   const isGravity = wallType === '중력식'
 
@@ -229,8 +231,13 @@ export default function SectionDiagram({
         {keyEnabled && !isGravity && (keyDepth ?? 0) > 0 && (keyWidth ?? 0) > 0 && (() => {
           const kd = keyDepth ?? 0
           const kw = keyWidth ?? 0
-          // 키 위치: 저판 하단, C6_toe 위치에서 시작
-          const kx = _c6Toe
+          const tBot = _stemTop + _batter + _batterBack
+          // 키 위치: key_pos에 따라 결정
+          let kx: number
+          if (keyPos === 'toe') kx = _c6Toe / 2 - kw / 2
+          else if (keyPos === 'heel') kx = B - kw
+          else if (keyPos === 'custom') kx = (keyX ?? 0)
+          else kx = _c6Toe  // 'wall' 기본값 — 벽체 전면
           const keyPoly = `${px(kx)},${py(0)} ${px(kx + kw)},${py(0)} ${px(kx + kw)},${py(-kd)} ${px(kx)},${py(-kd)}`
           return (
             <g>

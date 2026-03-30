@@ -87,6 +87,8 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
           keyEnabled={f.key_enabled}
           keyDepth={f.key_depth}
           keyWidth={f.key_width}
+          keyPos={f.key_pos}
+          keyX={f.key_x}
         />
 
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
@@ -250,6 +252,20 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
                 onChange={v => set({ key_depth: v })} />
               <Num label="키 폭 (m)" value={f.key_width} step={0.05}
                 onChange={v => set({ key_width: v })} />
+              <label className="flex flex-col gap-0.5 col-span-2">
+                <span className="text-xs text-gray-500">키 위치</span>
+                <select value={f.key_pos} onChange={e => set({ key_pos: e.target.value as any })}
+                  className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white">
+                  <option value="toe">Toe (전면)</option>
+                  <option value="wall">벽체 하부</option>
+                  <option value="heel">Heel (배면)</option>
+                  <option value="custom">직접 입력</option>
+                </select>
+              </label>
+              {f.key_pos === 'custom' && (
+                <Num label="저판 좌단에서 거리 (m)" value={f.key_x} step={0.05}
+                  onChange={v => set({ key_x: v })} />
+              )}
             </div>
           )}
           <label className="flex items-center gap-2 mt-2">

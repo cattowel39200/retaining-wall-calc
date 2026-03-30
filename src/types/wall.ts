@@ -68,6 +68,7 @@ export interface WallInput {
   key_enabled: boolean
   key_depth: number
   key_width: number
+  key_x: number  // 저판 좌단 기준 키 중심 x좌표 (m)
 }
 
 /** 폼에서 직접 편집하는 필드 (computed 필드 제외) */
@@ -129,6 +130,8 @@ export interface WallFormFields {
   key_enabled: boolean
   key_depth: NumField
   key_width: NumField
+  key_pos: 'toe' | 'wall' | 'heel' | 'custom'  // 키 위치
+  key_x: NumField                                // custom일 때 저판 좌단 기준 거리(m)
 }
 
 export function getDefaultFormFields(wallType: WallType): WallFormFields {
@@ -190,6 +193,8 @@ export function getDefaultFormFields(wallType: WallType): WallFormFields {
     key_enabled: false,
     key_depth: null,
     key_width: null,
+    key_pos: 'wall',
+    key_x: null,
   }
 
   if (wallType === '역L형') {
@@ -270,6 +275,11 @@ export function formToInput(f: WallFormFields): WallInput {
     key_enabled: f.key_enabled,
     key_depth: n(f.key_depth),
     key_width: n(f.key_width),
+    // key_pos → key_x 변환 (저판 좌단 기준)
+    key_x: f.key_pos === 'custom' ? n(f.key_x)
+      : f.key_pos === 'toe' ? n(f.C6_toe) / 2
+      : f.key_pos === 'heel' ? (n(f.C6_toe) + t_stem + n(f.batter) + n(f.batter_back) + n(f.C8_heel)) - n(f.key_width) / 2
+      : n(f.C6_toe) + n(f.key_width) / 2,  // 'wall' — 벽체 전면 바로 앞
   }
 }
 

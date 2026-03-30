@@ -552,7 +552,7 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
     Pp_key = 0.5 * Kp * gamma_front * (h_bot ** 2 - h_top ** 2);
     W_key = gamma_c * key_width * key_depth;
     // 전단키 자중 모멘트 (기초 좌단 기준)
-    const x_key = C6_toe + key_width / 2;  // 전단키 중심 x좌표
+    const x_key = params['key_x'] ?? (C6_toe + key_width / 2);
     M_key = W_key * x_key;
   }
 
