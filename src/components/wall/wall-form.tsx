@@ -80,6 +80,7 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
           c8Heel={f.C8_heel}
           dSlab={f.D_slab}
           hsGap={f.Hs_gap}
+          gwlHeight={f.gwl_height}
         />
 
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
@@ -162,6 +163,29 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
         <p className="text-xs text-gray-400 mt-1">KDS 기준 기본값이 적용됩니다. 필요 시 수정 가능</p>
       </Section>
 
+      {/* 철근 배근 */}
+      {(!isGravity || f.semi_gravity) && (
+        <Section title="철근 배근">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <p className="col-span-2 text-xs font-semibold text-gray-600">B-B 저판 Heel (상부)</p>
+            <RebarSelect label="직경" value={f.rebar1_dia} onChange={v => set({ rebar1_dia: v })} />
+            <Num label="간격 (mm)" value={f.rebar1_spacing} step={25} onChange={v => set({ rebar1_spacing: v })} />
+
+            <p className="col-span-2 text-xs font-semibold text-gray-600 mt-1">C-C 벽체 배면 (인장측)</p>
+            <RebarSelect label="직경" value={f.rebar2_dia} onChange={v => set({ rebar2_dia: v })} />
+            <Num label="간격 (mm)" value={f.rebar2_spacing} step={25} onChange={v => set({ rebar2_spacing: v })} />
+
+            <p className="col-span-2 text-xs font-semibold text-gray-600 mt-1">D-D 벽체 상부</p>
+            <RebarSelect label="직경" value={f.rebar3_dia ?? 16} onChange={v => set({ rebar3_dia: v })} />
+            <Num label="간격 (mm)" value={f.rebar3_spacing} step={25} onChange={v => set({ rebar3_spacing: v })} />
+
+            <p className="col-span-2 text-xs font-semibold text-gray-600 mt-1">A-A 저판 Toe (하부)</p>
+            <RebarSelect label="직경" value={f.rebar_toe_dia ?? 16} onChange={v => set({ rebar_toe_dia: v })} />
+            <Num label="간격 (mm)" value={f.rebar_toe_spacing} step={25} onChange={v => set({ rebar_toe_spacing: v })} />
+          </div>
+        </Section>
+      )}
+
       {/* 지하수위 */}
       <Section title="지하수위">
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
@@ -170,6 +194,7 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
           <Num label="포화단위중량 (kN/m3)" value={f.gamma_sat} step={0.5}
             onChange={(v) => set({ gamma_sat: v })} />
         </div>
+        <p className="text-xs text-gray-400 mt-1">입력 시 단면도에 수위 바 표시</p>
       </Section>
 
       {/* 지지력 */}

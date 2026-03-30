@@ -4,7 +4,11 @@
  * 적용기준: KDS 11 80 05, KDS 11 80 15, KDS 14 20 20
  */
 
-import { autoSelectRebar, type AutoRebarResult } from '@/lib/auto-rebar'
+// 철근 단면적 (mm²)
+const REBAR_AREA: Record<number, number> = {
+  10: 71.33, 13: 126.7, 16: 198.6, 19: 286.5,
+  22: 387.1, 25: 506.7, 29: 642.4, 32: 794.2,
+}
 
 // ================================================================
 // Terzaghi 지지력 계수 테이블 (phi 단위: 도)
@@ -999,11 +1003,6 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
   let sec_DD: Record<string, any> | null;
   let sec_AA: Record<string, any> | null;
 
-  let auto_BB: AutoRebarResult | null = null;
-  let auto_CC: AutoRebarResult | null = null;
-  let auto_DD: AutoRebarResult | null = null;
-  let auto_AA: AutoRebarResult | null = null;
-
   if (is_gravity && !is_semi_gravity) {
     sec_BB = null;
     sec_CC = null;
@@ -1011,37 +1010,32 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
     sec_AA = null;
   } else if (is_semi_gravity) {
     const H_sec_cc = !is_gravity ? t_stem_bot * 1000 : B * 1000;
-    auto_CC = autoSelectRebar(Mu_CC, Vu_CC, H_sec_cc, Dc_wall, fck, fy);
     sec_CC = sectionCheck(Mu_CC, Mcr_CC, Vu_CC, H_sec_cc, Dc_wall,
-                          auto_CC.main_dia, _rebarArea(auto_CC.main_dia), auto_CC.main_spacing, "벽체하부 (C-C)");
+                          rebar2_dia, rebar2_area, rebar2_spacing, "벽체하부 (C-C)");
     sec_BB = null;
     sec_DD = null;
     sec_AA = null;
   } else {
     // L형/역L형/역T형
     if (has_heel) {
-      auto_BB = autoSelectRebar(Mu_BB, Vu_BB, D_slab * 1000, Dc_slab, fck, fy);
       sec_BB = sectionCheck(Mu_BB, Mcr_BB, Vu_BB, D_slab * 1000, Dc_slab,
-                            auto_BB.main_dia, _rebarArea(auto_BB.main_dia), auto_BB.main_spacing, "저판 (B-B)");
+                            rebar1_dia, rebar1_area, rebar1_spacing, "저판 (B-B)");
     } else {
       sec_BB = null;
     }
 
     const H_sec_cc = t_stem_bot * 1000;
-    auto_CC = autoSelectRebar(Mu_CC, Vu_CC, H_sec_cc, Dc_wall, fck, fy);
     sec_CC = sectionCheck(Mu_CC, Mcr_CC, Vu_CC, H_sec_cc, Dc_wall,
-                          auto_CC.main_dia, _rebarArea(auto_CC.main_dia), auto_CC.main_spacing, "벽체하부 (C-C)");
+                          rebar2_dia, rebar2_area, rebar2_spacing, "벽체하부 (C-C)");
 
     const t_stem_mid = t_stem + (batter + batter_back) / 2;
     const H_sec_dd = t_stem_mid * 1000;
-    auto_DD = autoSelectRebar(Mu_DD, Vu_DD, H_sec_dd, Dc_wall, fck, fy);
     sec_DD = sectionCheck(Mu_DD, Mcr_DD, Vu_DD, H_sec_dd, Dc_wall,
-                          auto_DD.main_dia, _rebarArea(auto_DD.main_dia), auto_DD.main_spacing, "벽체중앙 (D-D)");
+                          rebar3_dia, rebar3_area, rebar3_spacing, "벽체중앙 (D-D)");
 
     if (has_toe) {
-      auto_AA = autoSelectRebar(Mu_AA, Vu_AA, D_slab * 1000, Dc_toe, fck, fy);
       sec_AA = sectionCheck(Mu_AA, Mcr_AA, Vu_AA, D_slab * 1000, Dc_toe,
-                            auto_AA.main_dia, _rebarArea(auto_AA.main_dia), auto_AA.main_spacing, "앞굽판 (A-A)");
+                            rebar_toe_dia, rebar_toe_area, rebar_toe_spacing, "앞굽판 (A-A)");
     } else {
       sec_AA = null;
     }
@@ -1162,10 +1156,10 @@ export function calculateWall(params: Record<string, any>): Record<string, any> 
       },
     },
     member: {
-      BB: sec_BB ? { ...sec_BB, auto: auto_BB } : null,
-      CC: sec_CC ? { ...sec_CC, auto: auto_CC } : null,
-      DD: sec_DD ? { ...sec_DD, auto: auto_DD } : null,
-      AA: sec_AA ? { ...sec_AA, auto: auto_AA } : null,
+      BB: sec_BB ?? null,
+      CC: sec_CC ?? null,
+      DD: sec_DD ?? null,
+      AA: sec_AA ?? null,
     },
     judgment: {
       slide_normal: j_slide_n,

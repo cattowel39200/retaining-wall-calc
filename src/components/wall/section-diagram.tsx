@@ -12,10 +12,11 @@ interface Props {
   c8Heel: NumField
   dSlab: NumField
   hsGap: NumField
+  gwlHeight?: NumField
 }
 
 export default function SectionDiagram({
-  wallType, stemTop, hStem, batter, batterBack, c6Toe, c8Heel, dSlab, hsGap,
+  wallType, stemTop, hStem, batter, batterBack, c6Toe, c8Heel, dSlab, hsGap, gwlHeight,
 }: Props) {
   const isGravity = wallType === '중력식'
 
@@ -28,6 +29,7 @@ export default function SectionDiagram({
   const _c8Heel = c8Heel ?? 0
   const _dSlab = dSlab ?? 0
   const _hsGap = hsGap ?? 0
+  const _gwl = gwlHeight ?? 0
 
   // computed
   const tBot = _stemTop + _batter + _batterBack
@@ -224,6 +226,22 @@ export default function SectionDiagram({
           <>
             <line x1={px(-0.1 * B)} y1={py(0)} x2={px(0)} y2={py(0)} stroke="#718096" strokeWidth={1} />
             <line x1={px(B)} y1={py(0)} x2={px(B + 0.15 * B)} y2={py(0)} stroke="#718096" strokeWidth={1} />
+          </>
+        )}
+
+        {/* 지하수위 바 */}
+        {_gwl > 0 && (
+          <>
+            <rect x={px(0)} y={py(_gwl)} width={px(B) - px(0)} height={py(0) - py(_gwl)}
+              fill="#3b82f6" opacity={0.15} />
+            <line x1={px(-0.08 * B)} y1={py(_gwl)} x2={px(B + 0.08 * B)} y2={py(_gwl)}
+              stroke="#3b82f6" strokeWidth={1.2} strokeDasharray="4,2" />
+            <text x={px(B + 0.1 * B)} y={py(_gwl) + 3} fontSize={7} fill="#3b82f6" fontWeight="bold">
+              GWL {_gwl.toFixed(1)}m
+            </text>
+            {/* 수위 바 (우측) */}
+            <rect x={px(B + 0.12 * B)} y={py(_gwl)} width={6} height={py(0) - py(_gwl)}
+              fill="#3b82f6" opacity={0.4} rx={2} />
           </>
         )}
 
