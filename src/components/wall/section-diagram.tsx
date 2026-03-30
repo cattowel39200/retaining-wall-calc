@@ -16,11 +16,14 @@ interface Props {
   slopeType?: 'flat' | 'berm'
   slopeN?: NumField
   slopeBerm?: NumField
+  keyEnabled?: boolean
+  keyDepth?: NumField
+  keyWidth?: NumField
 }
 
 export default function SectionDiagram({
   wallType, stemTop, hStem, batter, batterBack, c6Toe, c8Heel, dSlab, hsGap, gwlHeight,
-  slopeType, slopeN, slopeBerm,
+  slopeType, slopeN, slopeBerm, keyEnabled, keyDepth, keyWidth,
 }: Props) {
   const isGravity = wallType === '중력식'
 
@@ -221,6 +224,27 @@ export default function SectionDiagram({
         {slabPoly && (
           <polygon points={slabPoly} fill="#e2e8f0" stroke="#2d3748" strokeWidth={1.2} />
         )}
+
+        {/* key (활동방지키) */}
+        {keyEnabled && !isGravity && (keyDepth ?? 0) > 0 && (keyWidth ?? 0) > 0 && (() => {
+          const kd = keyDepth ?? 0
+          const kw = keyWidth ?? 0
+          // 키 위치: 저판 하단, C6_toe 위치에서 시작
+          const kx = _c6Toe
+          const keyPoly = `${px(kx)},${py(0)} ${px(kx + kw)},${py(0)} ${px(kx + kw)},${py(-kd)} ${px(kx)},${py(-kd)}`
+          return (
+            <g>
+              <polygon points={keyPoly} fill="#a0aec0" stroke="#2d3748" strokeWidth={1.2} />
+              <text x={px(kx + kw / 2)} y={py(-kd / 2) + 3}
+                textAnchor="middle" fontSize={6} fill="#2d3748" fontWeight="bold">Key</text>
+              {/* 키 치수선 */}
+              <line x1={px(kx + kw + 0.05 * B)} y1={py(0)} x2={px(kx + kw + 0.05 * B)} y2={py(-kd)}
+                stroke="#e53e3e" strokeWidth={0.8} markerStart="url(#arr)" markerEnd="url(#arr)" />
+              <text x={px(kx + kw + 0.1 * B)} y={py(-kd / 2) + 3}
+                textAnchor="start" fontSize={6} fill="#e53e3e" fontWeight="bold">{kd.toFixed(2)}</text>
+            </g>
+          )
+        })()}
 
         {/* wall */}
         <polygon points={wallPoly} fill="#cbd5e0" stroke="#2d3748" strokeWidth={1.2} />

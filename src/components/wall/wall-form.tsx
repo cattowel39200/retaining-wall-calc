@@ -84,6 +84,9 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
           slopeType={f.slope_type}
           slopeN={f.slope_n}
           slopeBerm={f.slope_berm}
+          keyEnabled={f.key_enabled}
+          keyDepth={f.key_depth}
+          keyWidth={f.key_width}
         />
 
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
