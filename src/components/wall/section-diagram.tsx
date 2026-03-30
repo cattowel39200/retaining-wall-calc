@@ -13,10 +13,14 @@ interface Props {
   dSlab: NumField
   hsGap: NumField
   gwlHeight?: NumField
+  slopeType?: 'flat' | 'berm'
+  slopeN?: NumField
+  slopeBerm?: NumField
 }
 
 export default function SectionDiagram({
   wallType, stemTop, hStem, batter, batterBack, c6Toe, c8Heel, dSlab, hsGap, gwlHeight,
+  slopeType, slopeN, slopeBerm,
 }: Props) {
   const isGravity = wallType === '중력식'
 
@@ -228,6 +232,48 @@ export default function SectionDiagram({
             <line x1={px(B)} y1={py(0)} x2={px(B + 0.15 * B)} y2={py(0)} stroke="#718096" strokeWidth={1} />
           </>
         )}
+
+        {/* 배면 비탈면 */}
+        {slopeType === 'berm' && !isGravity && (slopeN ?? 0) > 0 && (() => {
+          const _berm = slopeBerm ?? 1
+          const _n = slopeN ?? 1.5
+          const soilH = _hStem - _hsGap
+          if (soilH <= 0) return null
+          const soilTop = _dSlab + soilH
+          const wallBotRight = _c6Toe + _batterBack
+          // 소단 시작점 = 벽체 상단 배면
+          const bermStart = wallBotRight
+          const bermEnd = bermStart + _berm
+          // 비탈면: 소단 끝에서 1:n 구배로 올라감
+          const slopeRise = soilH * 0.6  // 비탈면 높이 (표현용)
+          const slopeRun = slopeRise * _n
+          const slopeTopX = bermEnd + slopeRun
+          const slopeTopY = soilTop + slopeRise
+          return (
+            <g>
+              {/* 비탈면 삼각형 */}
+              <polygon
+                points={`${px(bermEnd)},${py(soilTop)} ${px(slopeTopX)},${py(slopeTopY)} ${px(slopeTopX)},${py(soilTop)}`}
+                fill="#fefce8" stroke="#d69e2e" strokeWidth={0.5} opacity={0.5}
+              />
+              {/* 소단 (수평선) */}
+              <line x1={px(bermStart)} y1={py(soilTop)} x2={px(bermEnd)} y2={py(soilTop)}
+                stroke="#92400e" strokeWidth={1.2} />
+              {/* 비탈면 경사선 */}
+              <line x1={px(bermEnd)} y1={py(soilTop)} x2={px(slopeTopX)} y2={py(slopeTopY)}
+                stroke="#92400e" strokeWidth={1.2} />
+              {/* 라벨 */}
+              <text x={px((bermStart + bermEnd) / 2)} y={py(soilTop) - 5}
+                textAnchor="middle" fontSize={6} fill="#92400e" fontWeight="bold">
+                소단 {_berm}m
+              </text>
+              <text x={px((bermEnd + slopeTopX) / 2) + 5} y={py((soilTop + slopeTopY) / 2) - 5}
+                textAnchor="middle" fontSize={6} fill="#92400e" fontWeight="bold">
+                1:{_n}
+              </text>
+            </g>
+          )
+        })()}
 
         {/* 지하수위 바 */}
         {_gwl > 0 && (

@@ -91,6 +91,9 @@ export interface WallFormFields {
   phi_deg: NumField
   c_soil: NumField
   alpha_deg: NumField
+  slope_type: 'flat' | 'berm'  // 수평 or 소단+구배
+  slope_n: NumField             // 1:n 구배 (n값)
+  slope_berm: NumField          // 소단 폭 (m), 기본 1m
   Df: NumField
   phi2_deg: NumField
   gamma_found: NumField
@@ -148,6 +151,9 @@ export function getDefaultFormFields(wallType: WallType): WallFormFields {
     phi_deg: null,
     c_soil: null,
     alpha_deg: null,
+    slope_type: 'flat',
+    slope_n: 1.5,        // 1:1.5 기본 구배
+    slope_berm: 1.0,     // 소단 1m
     Df: null,
     phi2_deg: null,
     gamma_found: null,
@@ -225,7 +231,10 @@ export function formToInput(f: WallFormFields): WallInput {
     gamma_t: n(f.gamma_t),
     phi_deg: n(f.phi_deg),
     c_soil: n(f.c_soil),
-    alpha_deg: n(f.alpha_deg),
+    // 비탈면 구배 → alpha_deg 자동 변환
+    alpha_deg: f.slope_type === 'berm' && n(f.slope_n) > 0
+      ? Math.atan(1 / n(f.slope_n)) * (180 / Math.PI)
+      : n(f.alpha_deg),
     Df: n(f.Df),
     phi2_deg: f.phi2_deg,
     gamma_found: f.gamma_found,

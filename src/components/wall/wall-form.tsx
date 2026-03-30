@@ -81,6 +81,9 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
           dSlab={f.D_slab}
           hsGap={f.Hs_gap}
           gwlHeight={f.gwl_height}
+          slopeType={f.slope_type}
+          slopeN={f.slope_n}
+          slopeBerm={f.slope_berm}
         />
 
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2">
@@ -138,10 +141,31 @@ export default function WallForm({ fields, onChange }: WallFormProps) {
             onChange={(v) => set({ phi_deg: v })} />
           <Num label="점착력 c (kPa)" value={f.c_soil} step={1}
             onChange={(v) => set({ c_soil: v })} />
-          <Num label="경사각 alpha (deg)" value={f.alpha_deg} step={1}
-            onChange={(v) => set({ alpha_deg: v })} />
           <Num label="토피고 Df (m)" value={f.Df} step={0.1}
             onChange={(v) => set({ Df: v })} />
+
+          {/* 배면 비탈면 */}
+          <label className="flex flex-col gap-0.5 col-span-2 mt-1">
+            <span className="text-xs text-gray-500">배면 비탈면</span>
+            <select value={f.slope_type} onChange={e => {
+              const v = e.target.value as 'flat' | 'berm'
+              set({ slope_type: v, alpha_deg: v === 'flat' ? 0 : null })
+            }} className="w-full rounded border border-gray-300 px-2 py-1 text-sm bg-white">
+              <option value="flat">수평 (비탈면 없음)</option>
+              <option value="berm">소단 + 구배 (1:n)</option>
+            </select>
+          </label>
+          {f.slope_type === 'berm' && (
+            <>
+              <Num label="소단 폭 (m)" value={f.slope_berm} step={0.5}
+                onChange={(v) => set({ slope_berm: v })} />
+              <Num label="구배 1:n (n값)" value={f.slope_n} step={0.1}
+                onChange={(v) => set({ slope_n: v })} />
+              <p className="col-span-2 text-xs text-blue-600">
+                α = {f.slope_n && f.slope_n > 0 ? (Math.atan(1 / f.slope_n) * 180 / Math.PI).toFixed(1) : '0'}° (1:{f.slope_n ?? '?'} → atan(1/{f.slope_n ?? '?'}))
+              </p>
+            </>
+          )}
         </div>
       </Section>
 
